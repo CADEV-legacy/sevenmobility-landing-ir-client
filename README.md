@@ -1,4 +1,4 @@
-# Seven Mobility Landing Product 3D
+# Seven Mobility Landing Page for IR (Angel round).
 
 ## Languages
 
