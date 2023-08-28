@@ -13,5 +13,6 @@ export const PATH = {
 } as const;
 
 export const COLOR = {
-  theme: '#242424',
+  background: '#FFFFFF',
+  font: '#000000',
 } as const;

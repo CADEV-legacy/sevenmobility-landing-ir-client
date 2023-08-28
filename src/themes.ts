@@ -30,14 +30,16 @@ export const theme = createTheme({
           height: '100%',
           margin: 0,
           padding: 0,
-          backgroundColor: COLOR.theme,
+          color: COLOR.font,
+          backgroundColor: COLOR.background,
         },
         body: {
           width: '100%',
           height: '100%',
           margin: 0,
           padding: 0,
-          backgroundColor: COLOR.theme,
+          color: COLOR.font,
+          backgroundColor: COLOR.background,
         },
         '#root': {
           width: '100%',
