@@ -2,41 +2,48 @@ import { PCFSoftShadowMap, SRGBColorSpace, WebGLRenderer } from 'three';
 
 import { IIIDM } from './IIIDM';
 
+/**
+ * NOTE: IIIDMCore definition.
+ * 1. IIIDMCore is a singleton class.
+ * 2. IIIDMCore is core of IIIDM.
+ * 3. Handles canvas and renderer.
+ * 4. Handles resource loading.
+ */
 export class IIIDMCore {
-  private canvas: HTMLCanvasElement;
-  private renderer: WebGLRenderer;
+  private _canvas: HTMLCanvasElement;
+  private _renderer: WebGLRenderer;
 
   private activeIIIDM: IIIDM | null = null;
 
   constructor() {
-    this.renderer = new WebGLRenderer({
+    this._renderer = new WebGLRenderer({
       antialias: true,
       preserveDrawingBuffer: true,
       alpha: true,
     });
 
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = PCFSoftShadowMap;
-    this.renderer.outputColorSpace = SRGBColorSpace;
+    this._renderer.shadowMap.enabled = true;
+    this._renderer.shadowMap.type = PCFSoftShadowMap;
+    this._renderer.outputColorSpace = SRGBColorSpace;
 
-    this.canvas = this.renderer.domElement;
+    this._canvas = this._renderer.domElement;
 
-    this.canvas.style.width = '100%';
-    this.canvas.style.height = '100%';
+    this._canvas.style.width = '100%';
+    this._canvas.style.height = '100%';
 
     // TODO: Add resource handlers.
   }
 
-  getCanvas() {
-    return this.canvas;
+  get canvas() {
+    return this._canvas;
   }
 
-  getRenderer() {
-    return this.renderer;
+  get renderer() {
+    return this._renderer;
   }
 
   changeIIIDM(newIIIDM: IIIDM) {
-    if (this.activeIIIDM && this.activeIIIDM !== newIIIDM && newIIIDM.getStatus())
+    if (this.activeIIIDM && this.activeIIIDM !== newIIIDM && newIIIDM.isActive)
       this.activeIIIDM.deactivate();
 
     this.activeIIIDM = newIIIDM;
