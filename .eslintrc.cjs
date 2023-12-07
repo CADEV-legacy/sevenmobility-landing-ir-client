@@ -37,7 +37,7 @@ module.exports = {
         ],
         pathGroups: [
           {
-            pattern: '{react*,react*/**,vite*,vite*/**}',
+            pattern: '{react*,react*/**,vite*,vite*/**,three*,three*/**}',
             group: 'external',
             position: 'before',
           },
