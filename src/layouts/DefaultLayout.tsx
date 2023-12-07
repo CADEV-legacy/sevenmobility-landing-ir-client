@@ -5,9 +5,11 @@ import * as S from './DefaultLayout.styles';
 const DefaultLayout: React.FC = () => {
   return (
     <S.DefaultLayoutContainer>
-      <S.Header></S.Header>
+      <S.DefaultLayoutHeader />
+      <S.DefaultLayoutNav />
+      <S.DefaultLayoutSideBar />
       <Outlet />
-      <S.Footer></S.Footer>
+      <S.DefaultLayoutFooter />
     </S.DefaultLayoutContainer>
   );
 };

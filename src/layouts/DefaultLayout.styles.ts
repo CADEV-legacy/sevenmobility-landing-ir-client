@@ -3,16 +3,20 @@ import { styled } from '@mui/material';
 export const DefaultLayoutContainer = styled('main')({
   width: '100%',
   height: '100%',
+  backgroundColor: '#000000',
+  color: '#FFFFFF',
 });
 
-export const Header = styled('header')({
+export const DefaultLayoutHeader = styled('header')({
   width: '100%',
-  height: '3.75rem',
-  backgroundColor: 'red',
 });
 
-export const Footer = styled('footer')({
+export const DefaultLayoutNav = styled('nav')({
   width: '100%',
-  height: '15rem',
-  backgroundColor: 'red',
+});
+
+export const DefaultLayoutSideBar = styled('aside')({});
+
+export const DefaultLayoutFooter = styled('footer')({
+  width: '100%',
 });
