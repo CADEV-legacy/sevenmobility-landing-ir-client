@@ -11,6 +11,10 @@ export class ControlManager extends IIIDMManager {
   }
 
   get orbitControl() {
+    if (!this._orbitControl) {
+      throw this.logWorker.error('Before get orbitControl, please activate ControlManager.');
+    }
+
     return this._orbitControl;
   }
 
@@ -18,13 +22,12 @@ export class ControlManager extends IIIDMManager {
     this.onActivate();
 
     if (!this.core.activeCamera) {
-      this.logWorker.error('Camera is not activated.');
-
-      return;
+      throw this.logWorker.error('Camera is not activated.');
     }
 
     if (this._orbitControl) {
       this.logWorker.warn('Already activated.');
+      this._orbitControl.enabled = true;
 
       return;
     }
@@ -41,11 +44,19 @@ export class ControlManager extends IIIDMManager {
       return;
     }
 
-    this._orbitControl.dispose();
-    this._orbitControl = null;
+    this._orbitControl.enabled = false;
   }
 
-  clear() {
-    this.onClear();
+  initialize() {
+    this.onInitialize();
+
+    if (!this._orbitControl) {
+      this.logWorker.warn('Already initialized.');
+
+      return;
+    }
+
+    this._orbitControl.dispose();
+    this._orbitControl = null;
   }
 }

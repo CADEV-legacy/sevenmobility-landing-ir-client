@@ -1,10 +1,19 @@
-import { PCFSoftShadowMap, PerspectiveCamera, SRGBColorSpace, Scene, WebGLRenderer } from 'three';
+import {
+  PCFSoftShadowMap,
+  PerspectiveCamera,
+  ReinhardToneMapping,
+  SRGBColorSpace,
+  Scene,
+  WebGLRenderer,
+} from 'three';
 
 import { IIIDM } from '.';
 import {
   AnimationManager,
   ControlManager,
+  EffectManager,
   FrameManager,
+  GUIManager,
   ResourceManager,
   ShaderManager,
 } from './managers';
@@ -16,7 +25,6 @@ import {
  * 3. This class is includes all managers and renderer. (Then, all managers and renderer are singleton.)
  */
 export class IIIDMCore {
-  private _isActive: boolean = false;
   private _canvas: HTMLCanvasElement;
   private _renderer: WebGLRenderer;
   private _activeCamera: PerspectiveCamera | null = null;
@@ -24,10 +32,11 @@ export class IIIDMCore {
   private _activeIIIDM: IIIDM | null = null;
   private _animationManager: AnimationManager;
   private _controlManager: ControlManager;
+  private _effectManager: EffectManager;
   private _frameManager: FrameManager;
+  private _guiManager: GUIManager;
   private _resourceManager: ResourceManager;
   private _shaderManager: ShaderManager;
-
   private _isDevMode: boolean;
 
   constructor(isDevMode: boolean) {
@@ -38,9 +47,11 @@ export class IIIDMCore {
       preserveDrawingBuffer: true,
       alpha: true,
     });
+    this._renderer.setPixelRatio(window.devicePixelRatio);
     this._renderer.shadowMap.enabled = true;
     this._renderer.shadowMap.type = PCFSoftShadowMap;
     this._renderer.outputColorSpace = SRGBColorSpace;
+    this._renderer.toneMapping = ReinhardToneMapping;
 
     this._canvas = this._renderer.domElement;
     this._canvas.style.width = '100%';
@@ -48,13 +59,11 @@ export class IIIDMCore {
 
     this._animationManager = new AnimationManager(this);
     this._controlManager = new ControlManager(this);
+    this._effectManager = new EffectManager(this);
     this._frameManager = new FrameManager(this);
+    this._guiManager = new GUIManager(this);
     this._resourceManager = new ResourceManager(this);
     this._shaderManager = new ShaderManager(this);
-  }
-
-  get isActive() {
-    return this._isActive;
   }
 
   get canvas() {
@@ -73,8 +82,16 @@ export class IIIDMCore {
     return this._controlManager;
   }
 
+  get effectManager() {
+    return this._effectManager;
+  }
+
   get frameManager() {
     return this._frameManager;
+  }
+
+  get guiManager() {
+    return this._guiManager;
   }
 
   get resourceManager() {
@@ -106,34 +123,30 @@ export class IIIDMCore {
     if (this._activeIIIDM && this._activeIIIDM !== newIIIDM && newIIIDM.isActive)
       this._activeIIIDM.dispose();
 
+    if (this._activeIIIDM && this._activeIIIDM !== newIIIDM) this.initializeManager();
+
     this._activeIIIDM = newIIIDM;
     this._activeCamera = newIIIDM.activeCamera;
     this._activeScene = newIIIDM.activeScene;
-
-    this.clearManager();
-  }
-
-  activateManager() {
-    this._animationManager.activate();
-    this._controlManager.activate();
-    this._frameManager.activate();
-    this._resourceManager.activate();
-    this._shaderManager.activate();
   }
 
   deactivateManager() {
     this._animationManager.deactivate();
     this._controlManager.deactivate();
+    this._effectManager.deactivate();
     this._frameManager.deactivate();
+    this._guiManager.deactivate();
     this._resourceManager.deactivate();
     this._shaderManager.deactivate();
   }
 
-  clearManager() {
-    this._animationManager.clear();
-    this._controlManager.clear();
-    this._frameManager.clear();
-    this._resourceManager.clear();
-    this._shaderManager.clear();
+  initializeManager() {
+    this._animationManager.initialize();
+    this._controlManager.initialize();
+    this._effectManager.initialize();
+    this._frameManager.initialize();
+    this._guiManager.initialize();
+    this._resourceManager.initialize();
+    this._shaderManager.initialize();
   }
 }

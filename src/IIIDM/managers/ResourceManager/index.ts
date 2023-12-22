@@ -5,6 +5,10 @@ import { RESOURCE_LOAD_STATUS, Resource } from './Resource';
 import { IIIDMCore } from '@/IIIDM/IIIDMCore';
 import { IIIDMManager } from '@/IIIDM/IIIDMManager';
 
+export type OnLoadProgressAction = (percentage: number) => void;
+
+export type OnLoadCompleteAction = () => void;
+
 /**
  * NOTE: ResourceLoader is a class that manages resources.
  * - ResourceLoader is a singleton class.
@@ -12,13 +16,15 @@ import { IIIDMManager } from '@/IIIDM/IIIDMManager';
  */
 export class ResourceManager extends IIIDMManager {
   private gltfLoader: GLTFLoader;
-  private resource: Resource<GLTF>;
+  private _resource: Resource<GLTF>;
+  private _onLoadProgressAction: OnLoadProgressAction | null = null;
+  private _onLoadCompleteAction: OnLoadCompleteAction | null = null;
 
   constructor(core: IIIDMCore) {
     super(core);
 
-    this.resource = new Resource<GLTF>();
-    this.resource.changeLoadStatus(RESOURCE_LOAD_STATUS.ready);
+    this._resource = new Resource<GLTF>();
+    this._resource.loadStatus = RESOURCE_LOAD_STATUS.ready;
 
     const gltfLoader = new GLTFLoader();
 
@@ -35,18 +41,20 @@ export class ResourceManager extends IIIDMManager {
     this.gltfLoader = gltfLoader;
   }
 
-  activate() {
-    this.onActivate();
+  get resource() {
+    if (!this._resource.data) {
+      throw this.logWorker.error('Before get resource, please load resource.');
+    }
+
+    return this._resource;
   }
 
-  deactivate() {
-    this.onDeactivate();
+  set onLoadProgressAction(action: OnLoadProgressAction) {
+    this._onLoadProgressAction = action;
   }
 
-  clear() {
-    this.onClear();
-
-    this.resource.clear();
+  set onLoadCompleteAction(action: OnLoadCompleteAction) {
+    this._onLoadCompleteAction = action;
   }
 
   private getDracoLoader() {
@@ -69,36 +77,53 @@ export class ResourceManager extends IIIDMManager {
   private onLoadProgress(xhr: ProgressEvent<EventTarget>) {
     const loadProgress = Math.ceil((xhr.loaded / xhr.total) * 100);
 
-    if (loadProgress === 100) {
-      this.resource.changeLoadStatus(RESOURCE_LOAD_STATUS.completed);
-      this.logWorker.info('Resource load completed.');
-    } else if (this.resource.loadStatus !== RESOURCE_LOAD_STATUS.loading) {
-      this.resource.changeLoadStatus(RESOURCE_LOAD_STATUS.loading);
+    if (this._onLoadProgressAction) this._onLoadProgressAction(loadProgress);
+
+    if (loadProgress !== 100 && this._resource.loadStatus !== RESOURCE_LOAD_STATUS.loading) {
+      this._resource.loadStatus = RESOURCE_LOAD_STATUS.loading;
     }
 
-    this.resource.changeLoadProgress(loadProgress);
+    if (loadProgress === this._resource.loadProgress) return;
+
+    this._resource.loadProgress = loadProgress;
     this.logWorker.info(`Resource load progress: ${loadProgress}%`);
+
+    if (loadProgress === 100) {
+      if (this._onLoadCompleteAction) this._onLoadCompleteAction();
+      this._resource.loadStatus = RESOURCE_LOAD_STATUS.completed;
+      this.logWorker.info('Resource load completed.');
+    }
   }
 
   async loadResource(url: string) {
-    try {
-      const gltfResource = await this.gltfLoader.loadAsync(url, this.onLoadProgress.bind(this));
+    if (!this.isActive) {
+      throw this.logWorker.error('ResourceManager is not activated.');
+    }
 
-      this.resource.data = gltfResource;
+    try {
+      this._resource.changeData(
+        await this.gltfLoader.loadAsync(url, this.onLoadProgress.bind(this))
+      );
     } catch (error) {
-      this.logWorker.error('Failed to load GLTF.', error);
+      this._resource.loadStatus = RESOURCE_LOAD_STATUS.failed;
+
+      throw this.logWorker.error('Failed to load GLTF.', error);
     }
   }
 
-  getResource() {
-    if (
-      this.resource.loadStatus !== RESOURCE_LOAD_STATUS.completed ||
-      this.resource.loadProgress !== 100 ||
-      !this.resource.data
-    ) {
-      this.logWorker.error('Resource is not loaded.');
-    }
+  activate() {
+    this.onActivate();
+  }
 
-    return { ...this.resource };
+  deactivate() {
+    this.onDeactivate();
+  }
+
+  initialize() {
+    this.onInitialize();
+
+    this._resource.initialize();
+    this._onLoadProgressAction = null;
+    this._onLoadCompleteAction = null;
   }
 }

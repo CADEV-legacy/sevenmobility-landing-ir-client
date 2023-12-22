@@ -1,41 +1,71 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import * as S from './page.styles';
 
 import { MotorcycleIIIDM } from '@/3ds';
+import { useIIIDMStore } from '@/stores';
 
 const Page: React.FC = () => {
-  const motorcycleIIIDMRef = useRef<MotorcycleIIIDM>();
-  // const cubeIIIDMRef = useRef<MotorcycleIIIDM>();
+  const { getNewMotorcycleIIIDM } = useIIIDMStore();
+  const motorcycleIIIDMRef = useRef<MotorcycleIIIDM | null>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
 
+  const runMotorcycleIIIDM = () => {
+    if (!canvasWrapperRef.current) throw new Error('Canvas wrapper not rendered yet.');
+
+    if (!motorcycleIIIDMRef.current) {
+      const newMotorcycleIIIDM = getNewMotorcycleIIIDM();
+
+      if (!newMotorcycleIIIDM) throw new Error('Failed to get new motorcycleIIIDM.');
+
+      newMotorcycleIIIDM.appendCanvasTo(canvasWrapperRef.current);
+      newMotorcycleIIIDM.onLoadProgressAction = progress => {
+        setLoadProgress(progress);
+      };
+      newMotorcycleIIIDM.onLoadCompleteAction = () => {
+        setIsLoaded(true);
+      };
+      newMotorcycleIIIDM.activate();
+      motorcycleIIIDMRef.current = newMotorcycleIIIDM;
+
+      console.info('MotorcycleIIIDM initialized.', newMotorcycleIIIDM);
+    } else {
+      motorcycleIIIDMRef.current.activate();
+    }
+  };
+
+  // NOTE: Initialize motorcycleIIIDM.
   useEffect(() => {
-    const motorcycleIIIDM = new MotorcycleIIIDM(undefined);
+    runMotorcycleIIIDM();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    console.info(motorcycleIIIDM);
+  // NOTE: Handle resize event for motorcycleIIIDM.
+  useEffect(() => {
+    if (!motorcycleIIIDMRef.current) return;
 
-    if (!canvasWrapperRef.current) throw new Error('Canvas not rendered.');
+    const motorcycleIIIDM = motorcycleIIIDMRef.current;
 
-    motorcycleIIIDM.appendCanvasTo(canvasWrapperRef.current);
-
-    motorcycleIIIDM.activate();
-
-    window.addEventListener('resize', () => motorcycleIIIDM.onResize());
-
-    motorcycleIIIDMRef.current = motorcycleIIIDM;
-
-    setTimeout(() => {
-      motorcycleIIIDM.ohhh();
-    }, 2000);
-
+    window.addEventListener('resize', motorcycleIIIDM.resize.bind(motorcycleIIIDM));
     return () => {
-      window.removeEventListener('resize', motorcycleIIIDM.onResize);
+      window.removeEventListener('resize', motorcycleIIIDM.resize.bind(motorcycleIIIDM));
+
+      motorcycleIIIDM.dispose();
     };
   }, []);
 
   return (
     <S.Container>
       <S.CanvasWrapper ref={canvasWrapperRef} />
+      <S.LoadProgressOverlay isLoaded={isLoaded}>
+        <S.LoadProgressText>
+          Loading......
+          <br />
+          {loadProgress}%
+        </S.LoadProgressText>
+      </S.LoadProgressOverlay>
     </S.Container>
   );
 };

@@ -22,7 +22,7 @@ export class IIIDMLogWorker<Target extends IIIDM | IIIDMManager> {
   }
 
   /** NOTE: Using this function as notice error. */
-  error(message: string, error?: unknown) {
-    throw new Error(`[${this.target.constructor.name}] ${message}\n${error}`);
+  error(message: string, error?: unknown): Error {
+    return new Error(`[${this.target.constructor.name}] ${message}\n${error}`);
   }
 }

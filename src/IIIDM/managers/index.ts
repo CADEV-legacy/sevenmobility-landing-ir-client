@@ -1,5 +1,7 @@
-export { AnimationManager } from './AnimationManager';
-export { ControlManager } from './ControlManager';
-export { FrameManager } from './FrameManager';
-export { ResourceManager } from './ResourceManager';
-export { ShaderManager } from './ShaderManager';
+export * from './AnimationManager';
+export * from './ControlManager';
+export * from './EffectManager';
+export * from './FrameManager';
+export * from './GUIManager';
+export * from './ResourceManager';
+export * from './ShaderManager';

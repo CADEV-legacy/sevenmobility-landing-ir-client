@@ -14,7 +14,7 @@ export class ShaderManager extends IIIDMManager {
     this.onDeactivate();
   }
 
-  clear() {
-    this.onClear();
+  initialize() {
+    this.onInitialize();
   }
 }

@@ -16,9 +16,9 @@ export type FramePerSecond = (typeof FRAME_PER_SECOND)[keyof typeof FRAME_PER_SE
 
 const DEFAULT_FRAME_PER_SECOND = FRAME_PER_SECOND[30];
 
-type FrameInitializeAction = (() => Promise<void>) | undefined;
-
 type FrameUpdateAction = (() => void) | undefined;
+
+type AfterFrameUpdateAction = ((...args: []) => void) | undefined;
 
 /**
  * NOTE: Change every scene in every frame.
@@ -27,19 +27,20 @@ type FrameUpdateAction = (() => void) | undefined;
  * - frameUpdateAction are required. (If you don't need frameInitializeAction, please don't activate this manager.)
  */
 export class FrameManager extends IIIDMManager {
-  private _fps: FramePerSecond;
-  private clock: Clock;
   private delta: number = 0;
   private interval: number;
-  private _frameInitializeAction: FrameInitializeAction | null = null;
+  private requestAnimationFrameId: number | null = null;
+  private _clock: Clock;
+  private _fps: FramePerSecond;
   private _frameUpdateAction: FrameUpdateAction | null = null;
+  private _afterFrameUpdateAction: AfterFrameUpdateAction | null = null;
 
   constructor(core: IIIDMCore, fps?: FramePerSecond) {
     super(core);
 
     this._fps = fps ?? DEFAULT_FRAME_PER_SECOND;
 
-    this.clock = new Clock();
+    this._clock = new Clock();
     this.interval = 1 / this._fps;
   }
 
@@ -47,30 +48,30 @@ export class FrameManager extends IIIDMManager {
     return this._fps;
   }
 
+  get clock() {
+    return this._clock;
+  }
+
   async activate() {
     this.onActivate();
-
-    if (!this._frameInitializeAction) {
-      this.logWorker.info('frameInitializeAction is not set.');
-    } else {
-      await this._frameInitializeAction();
-    }
-
-    this.runFrameUpdateAction();
   }
 
   deactivate() {
     this.onDeactivate();
+
+    if (this.requestAnimationFrameId) cancelAnimationFrame(this.requestAnimationFrameId);
   }
 
-  clear(): void {
-    this.onClear();
+  initialize(): void {
+    this.onInitialize();
 
-    this._frameInitializeAction = null;
+    this._fps = DEFAULT_FRAME_PER_SECOND;
+    this.delta = 0;
+    this.interval = 1 / this._fps;
     this._frameUpdateAction = null;
   }
 
-  changeFPS(fps: FramePerSecond) {
+  set fps(fps: FramePerSecond) {
     if (this._fps === fps) {
       this.logWorker.warn('Already same fps has set');
 
@@ -83,35 +84,28 @@ export class FrameManager extends IIIDMManager {
     this.logWorker.info(`Change fps to ${fps}`);
   }
 
-  /** NOTE: Initialize frameInitializeAction */
-  setFrameInitializeAction(frameInitializeAction: FrameInitializeAction) {
-    this._frameInitializeAction = frameInitializeAction;
+  set frameUpdateAction(action: FrameUpdateAction) {
+    this._frameUpdateAction = action;
   }
 
-  /** NOTE: Initialize frameUpdateAction */
-  setFrameUpdateAction(frameUpdateAction: FrameUpdateAction) {
-    this._frameUpdateAction = frameUpdateAction;
+  set afterFrameUpdateAction(action: AfterFrameUpdateAction) {
+    this._afterFrameUpdateAction = action;
   }
 
-  /** NOTE: When update action is changed, using this function. */
-  changeFrameUpdateAction(frameUpdateAction: FrameUpdateAction) {
-    this.deactivate();
+  run() {
+    if (!this.isActive) {
+      this.logWorker.info('FrameManager is deactivated.');
 
-    this._frameUpdateAction = frameUpdateAction;
-
-    this.activate();
-  }
-
-  private runFrameUpdateAction() {
-    if (!this._frameUpdateAction) {
-      this.logWorker.error('FrameUpdateAction is not set.');
+      if (this._afterFrameUpdateAction) this._afterFrameUpdateAction();
 
       return;
     }
 
-    requestAnimationFrame(this.runFrameUpdateAction.bind(this));
+    if (!this._frameUpdateAction) throw this.logWorker.error('FrameUpdateAction is not set.');
 
-    this.delta += this.clock.getDelta();
+    this.requestAnimationFrameId = requestAnimationFrame(this.run.bind(this));
+
+    this.delta += this._clock.getDelta();
 
     if (this.delta <= this.interval) return;
 
