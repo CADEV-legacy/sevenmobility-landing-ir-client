@@ -1,53 +1,43 @@
 import { GUI } from 'dat.gui';
 
-import { IIIDMCore } from '@/IIIDM/IIIDMCore';
-import { IIIDMManager } from '@/IIIDM/IIIDMManager';
+import { IIIDM } from '@/IIIDM';
+import { IIIDMManager } from '@/IIIDM/managers/IIIDMManager';
 
 export class GUIManager extends IIIDMManager {
   private _gui: GUI | null = null;
 
-  constructor(core: IIIDMCore) {
-    super(core);
+  constructor(maker: IIIDM) {
+    super(maker);
   }
 
   get gui() {
-    if (!this._gui) {
-      throw this.logWorker.error('Before get GUI, please activate GUIManager.');
-    }
+    if (!this._gui) throw this.logWorker.error('Before get gui, please initialize GUIManager.');
 
     return this._gui;
-  }
-
-  activate() {
-    this.onActivate();
-
-    if (!this._gui) {
-      this._gui = new GUI();
-    }
-
-    this._gui.open();
-  }
-
-  deactivate() {
-    this.onDeactivate();
-
-    if (!this._gui) {
-      this.logWorker.warn('Already deactivated.');
-
-      return;
-    }
-
-    this._gui.close();
   }
 
   initialize() {
     this.onInitialize();
 
-    if (!this._gui) {
-      this.logWorker.warn('Already initialized.');
+    this._gui = new GUI();
+  }
 
-      return;
-    }
+  activate() {
+    this.onActivate();
+
+    this._gui!.open();
+  }
+
+  deactivate() {
+    this.onDeactivate();
+
+    this._gui!.close();
+  }
+
+  clear() {
+    this.onClear();
+
+    if (!this._gui) return;
 
     this._gui.destroy();
     this._gui = null;

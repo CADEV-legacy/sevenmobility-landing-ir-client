@@ -15,8 +15,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-import { IIIDMCore } from '@/IIIDM/IIIDMCore';
-import { IIIDMManager } from '@/IIIDM/IIIDMManager';
+import { IIIDM } from '@/IIIDM';
+import { IIIDMManager } from '@/IIIDM/managers';
 
 type BloomEffectType = 'all' | 'selective';
 
@@ -27,23 +27,28 @@ const BLOOM_EFFECT_SHADER = {
     varying vec2 vUv;
 
     void main() {
+
       vUv = uv;
-    
+
       gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
     }
   `,
   fragment: `
     uniform sampler2D baseTexture;
     uniform sampler2D bloomTexture;
-    
+
     varying vec2 vUv;
-    
+
     void main() {
+
       gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
+
     }
   `,
 } as const;
 
+/** TODO: Make manager class of all effects, not only bloomEffect. */
 export class EffectManager extends IIIDMManager {
   private renderScene: RenderPass | null = null;
   private mixPass: ShaderPass | null = null;
@@ -56,8 +61,8 @@ export class EffectManager extends IIIDMManager {
   private _bloomEffectType: BloomEffectType = 'all';
   private _selectedMaterial: SelectedMaterial = {};
 
-  constructor(core: IIIDMCore) {
-    super(core);
+  constructor(maker: IIIDM) {
+    super(maker);
   }
 
   get bloomEffectComposer() {
@@ -83,7 +88,9 @@ export class EffectManager extends IIIDMManager {
   private changeMaterialToDark(object: Object3D<Object3DEventMap>) {
     if (!(object instanceof Mesh) || !object.isMesh) return;
 
-    if (this.bloomLayer.test(object.layers) === false) {
+    if (!this.bloomLayer.test(object.layers)) {
+      console.info('Darkended material');
+      console.info(object);
       this._selectedMaterial[object.uuid] = object.material;
 
       object.material = this.darkMaterial;
@@ -100,26 +107,26 @@ export class EffectManager extends IIIDMManager {
     }
   }
 
-  activate(
+  initialize(
     strength: number,
     radius: number,
     threshold: number,
     bloomEffectType?: BloomEffectType,
     layerDepth?: number
   ) {
-    this.onActivate();
+    this.onInitialize();
 
     this._bloomEffectType = bloomEffectType ?? 'all';
     this.bloomLayer.set(layerDepth ?? 1000);
 
-    this.bloomEffectComposer = new EffectComposer(this.core.renderer);
+    this.bloomEffectComposer = new EffectComposer(this.maker.renderer);
 
-    if (!this.core.activeScene || !this.core.activeCamera)
+    if (!this.maker.activeScene || !this.maker.activeCamera)
       throw this.logWorker.error('Not found scene or camera.');
 
-    this.renderScene = new RenderPass(this.core.activeScene, this.core.activeCamera);
+    this.renderScene = new RenderPass(this.maker.activeScene, this.maker.activeCamera);
     this.bloomPass = new UnrealBloomPass(
-      new Vector2(this.core.canvas.width, this.core.canvas.height),
+      new Vector2(this.maker.canvas.width, this.maker.canvas.height),
       strength,
       radius,
       threshold
@@ -130,7 +137,7 @@ export class EffectManager extends IIIDMManager {
     this.bloomEffectComposer.renderToScreen = false;
 
     if (this._bloomEffectType === 'selective') {
-      this.finalEffectComposer = new EffectComposer(this.core.renderer);
+      this.finalEffectComposer = new EffectComposer(this.maker.renderer);
 
       this.mixPass = new ShaderPass(
         new ShaderMaterial({
@@ -154,12 +161,36 @@ export class EffectManager extends IIIDMManager {
     }
   }
 
-  deactivate() {
-    this.onDeactivate();
+  activate() {
+    this.onActivate();
+
+    if (this.bloomEffectType === 'all') {
+      if (!this.bloomEffectComposer) throw this.logWorker.error('There is no bloomEffectComposer.');
+
+      this.bloomEffectComposer.renderToScreen = true;
+    } else {
+      if (!this.finalEffectComposer) throw this.logWorker.error('There is no finalEffectComposer.');
+
+      this.finalEffectComposer!.renderToScreen = true;
+    }
   }
 
-  initialize() {
-    this.onInitialize();
+  deactivate() {
+    this.onDeactivate();
+
+    if (this.bloomEffectType === 'all') {
+      if (!this.bloomEffectComposer) throw this.logWorker.error('There is no bloomEffectComposer.');
+
+      this.bloomEffectComposer!.renderToScreen = false;
+    } else {
+      if (!this.finalEffectComposer) throw this.logWorker.error('There is no finalEffectComposer.');
+
+      this.finalEffectComposer!.renderToScreen = false;
+    }
+  }
+
+  clear() {
+    this.onClear();
 
     if (this.bloomEffectComposer) {
       this.bloomEffectComposer.dispose();
@@ -175,15 +206,15 @@ export class EffectManager extends IIIDMManager {
   resize() {
     if (!this.bloomEffectComposer) throw this.logWorker.error('Not found bloom effect composer.');
 
-    this.bloomEffectComposer.setSize(this.core.canvas.width, this.core.canvas.height);
+    this.bloomEffectComposer.setSize(this.maker.canvas.width, this.maker.canvas.height);
 
     if (this.finalEffectComposer) {
-      this.finalEffectComposer.setSize(this.core.canvas.width, this.core.canvas.height);
+      this.finalEffectComposer.setSize(this.maker.canvas.width, this.maker.canvas.height);
     }
   }
 
   render() {
-    if (!this.core.activeScene || !this.core.activeCamera)
+    if (!this.maker.activeScene || !this.maker.activeCamera)
       throw this.logWorker.error('Not found scene or camera.');
 
     if (!this.bloomEffectComposer) throw this.logWorker.error('Not found bloom effect composer.');
@@ -193,13 +224,15 @@ export class EffectManager extends IIIDMManager {
     } else {
       if (!this.finalEffectComposer) throw this.logWorker.error('Not found final effect composer.');
 
-      this.core.activeScene.traverse(this.changeMaterialToDark.bind(this));
+      this.maker.activeScene.traverse(this.changeMaterialToDark.bind(this));
 
       this.bloomEffectComposer.render();
 
-      this.core.activeScene.traverse(this.restoreMaterial.bind(this));
+      this.maker.activeScene.traverse(this.restoreMaterial.bind(this));
 
       this.finalEffectComposer.render();
     }
   }
 }
+
+export { SmokeEffect } from './SmokeEffect';

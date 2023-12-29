@@ -1,7 +1,7 @@
 import { Clock } from 'three';
 
-import { IIIDMCore } from '@/IIIDM/IIIDMCore';
-import { IIIDMManager } from '@/IIIDM/IIIDMManager';
+import { IIIDM } from '@/IIIDM';
+import { IIIDMManager } from '@/IIIDM/managers/IIIDMManager';
 
 export const FRAME_PER_SECOND = {
   '18': 18,
@@ -16,59 +16,29 @@ export type FramePerSecond = (typeof FRAME_PER_SECOND)[keyof typeof FRAME_PER_SE
 
 const DEFAULT_FRAME_PER_SECOND = FRAME_PER_SECOND[30];
 
-type FrameUpdateAction = (() => void) | undefined;
+type FrameUpdateAction = () => void;
 
-type AfterFrameUpdateAction = ((...args: []) => void) | undefined;
+type RenderFunction = () => void;
 
 /**
  * NOTE: Change every scene in every frame.
  * - Default fps is 30.
- * - frameInitializeAction are optional. and this action will be called asynchronusly.
- * - frameUpdateAction are required. (If you don't need frameInitializeAction, please don't activate this manager.)
  */
 export class FrameManager extends IIIDMManager {
   private delta: number = 0;
-  private interval: number;
+  private interval: number = 1 / DEFAULT_FRAME_PER_SECOND;
   private requestAnimationFrameId: number | null = null;
-  private _clock: Clock;
-  private _fps: FramePerSecond;
-  private _frameUpdateAction: FrameUpdateAction | null = null;
-  private _afterFrameUpdateAction: AfterFrameUpdateAction | null = null;
+  private taskedFrameUpdateAction: FrameUpdateAction[] = [];
+  private _renderFunction: RenderFunction | null = null;
+  private _clock: Clock = new Clock();
+  private _fps: FramePerSecond = DEFAULT_FRAME_PER_SECOND;
 
-  constructor(core: IIIDMCore, fps?: FramePerSecond) {
-    super(core);
-
-    this._fps = fps ?? DEFAULT_FRAME_PER_SECOND;
-
-    this._clock = new Clock();
-    this.interval = 1 / this._fps;
+  constructor(maker: IIIDM) {
+    super(maker);
   }
 
   get fps() {
     return this._fps;
-  }
-
-  get clock() {
-    return this._clock;
-  }
-
-  async activate() {
-    this.onActivate();
-  }
-
-  deactivate() {
-    this.onDeactivate();
-
-    if (this.requestAnimationFrameId) cancelAnimationFrame(this.requestAnimationFrameId);
-  }
-
-  initialize(): void {
-    this.onInitialize();
-
-    this._fps = DEFAULT_FRAME_PER_SECOND;
-    this.delta = 0;
-    this.interval = 1 / this._fps;
-    this._frameUpdateAction = null;
   }
 
   set fps(fps: FramePerSecond) {
@@ -84,24 +54,103 @@ export class FrameManager extends IIIDMManager {
     this.logWorker.info(`Change fps to ${fps}`);
   }
 
-  set frameUpdateAction(action: FrameUpdateAction) {
-    this._frameUpdateAction = action;
+  get renderFunction() {
+    if (!this._renderFunction)
+      throw this.logWorker.error('Before get renderFunction, please initialize FrameManager.');
+
+    return this._renderFunction;
   }
 
-  set afterFrameUpdateAction(action: AfterFrameUpdateAction) {
-    this._afterFrameUpdateAction = action;
+  set renderFunction(renderFunction: RenderFunction) {
+    this._renderFunction = renderFunction;
   }
 
-  run() {
+  get clock() {
+    return this._clock;
+  }
+
+  /** NOTE: If already same function has added, other functions will be added. */
+  addFrameUpdateAction(...actions: FrameUpdateAction[]) {
+    actions.forEach(action => {
+      const sameFrameUpdateActionIndex = this.taskedFrameUpdateAction.findIndex(
+        taskedFrameUpdateAction => taskedFrameUpdateAction === action
+      );
+
+      if (sameFrameUpdateActionIndex === -1) {
+        this.taskedFrameUpdateAction.push(action);
+
+        return;
+      }
+    });
+  }
+
+  /** NOTE: If parameter actions had set on taskedFrameUpdateAction, this function will be remove them. */
+  removeFrameUpdateAction(...actions: FrameUpdateAction[]) {
+    actions.forEach(action => {
+      const sameFrameUpdateActionIndex = this.taskedFrameUpdateAction.findIndex(
+        taskedFrameUpdateAction => taskedFrameUpdateAction === action
+      );
+
+      if (sameFrameUpdateActionIndex !== -1) {
+        this.taskedFrameUpdateAction.splice(sameFrameUpdateActionIndex, 1);
+
+        return;
+      }
+    });
+  }
+
+  initialize(renderFunction: RenderFunction, fps?: FramePerSecond) {
+    this.onInitialize();
+
+    this.renderFunction = renderFunction;
+    this._fps = fps ?? DEFAULT_FRAME_PER_SECOND;
+    this.interval = 1 / this._fps;
+  }
+
+  activate() {
+    this.onActivate();
+
+    this.run();
+  }
+
+  deactivate() {
+    this.onDeactivate();
+  }
+
+  clear() {
+    this.onClear();
+
+    this._fps = DEFAULT_FRAME_PER_SECOND;
+    this.delta = 0;
+    this.interval = 1 / this._fps;
+    this.taskedFrameUpdateAction = [];
+  }
+
+  private clearAnimationFrame() {
+    if (!this.requestAnimationFrameId) return;
+
+    cancelAnimationFrame(this.requestAnimationFrameId);
+    this.requestAnimationFrameId = null;
+  }
+
+  private run() {
+    if (!this.isInitialized) throw this.logWorker.error('FrameManager is not initialized.');
+
     if (!this.isActive) {
-      this.logWorker.info('FrameManager is deactivated.');
+      this.logWorker.info('FrameManager is not activated.');
 
-      if (this._afterFrameUpdateAction) this._afterFrameUpdateAction();
+      this.clearAnimationFrame();
 
       return;
     }
 
-    if (!this._frameUpdateAction) throw this.logWorker.error('FrameUpdateAction is not set.');
+    if (!this.taskedFrameUpdateAction.length) {
+      this.logWorker.info('There is no tasked frameUpdateAction.');
+
+      this.clearAnimationFrame();
+
+      return;
+    }
 
     this.requestAnimationFrameId = requestAnimationFrame(this.run.bind(this));
 
@@ -109,9 +158,11 @@ export class FrameManager extends IIIDMManager {
 
     if (this.delta <= this.interval) return;
 
-    this._frameUpdateAction();
+    this.taskedFrameUpdateAction.forEach(frameUpdateAction => frameUpdateAction());
 
-    this.logWorker.info(`[Tick] [Target]:: ${this._frameUpdateAction.name} [FPS]:: ${this._fps}`);
+    this.renderFunction!();
+
+    this.logWorker.info(`[Tick] [FPS]:: ${this._fps}`);
 
     this.delta = this.delta % this.interval;
   }

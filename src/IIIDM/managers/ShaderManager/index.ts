@@ -1,9 +1,13 @@
-import { IIIDMCore } from '@/IIIDM/IIIDMCore';
-import { IIIDMManager } from '@/IIIDM/IIIDMManager';
+import { IIIDM } from '@/IIIDM';
+import { IIIDMManager } from '@/IIIDM/managers';
 
 export class ShaderManager extends IIIDMManager {
-  constructor(core: IIIDMCore) {
-    super(core);
+  constructor(maker: IIIDM) {
+    super(maker);
+  }
+
+  initialize() {
+    this.onInitialize();
   }
 
   activate() {
@@ -14,7 +18,7 @@ export class ShaderManager extends IIIDMManager {
     this.onDeactivate();
   }
 
-  initialize() {
-    this.onInitialize();
+  clear() {
+    this.onClear();
   }
 }

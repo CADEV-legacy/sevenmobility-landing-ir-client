@@ -1,62 +1,46 @@
 import { OrbitControls } from 'three-stdlib';
 
-import { IIIDMCore } from '@/IIIDM/IIIDMCore';
-import { IIIDMManager } from '@/IIIDM/IIIDMManager';
-
+import { IIIDM } from '@/IIIDM';
+import { IIIDMManager } from '@/IIIDM/managers';
 export class ControlManager extends IIIDMManager {
-  private _orbitControl: OrbitControls | null = null;
+  private orbitControl: OrbitControls | null = null;
 
-  constructor(core: IIIDMCore) {
-    super(core);
-  }
+  constructor(maker: IIIDM) {
+    super(maker);
 
-  get orbitControl() {
-    if (!this._orbitControl) {
-      throw this.logWorker.error('Before get orbitControl, please activate ControlManager.');
-    }
-
-    return this._orbitControl;
-  }
-
-  activate() {
-    this.onActivate();
-
-    if (!this.core.activeCamera) {
-      throw this.logWorker.error('Camera is not activated.');
-    }
-
-    if (this._orbitControl) {
-      this.logWorker.warn('Already activated.');
-      this._orbitControl.enabled = true;
-
-      return;
-    }
-
-    this._orbitControl = new OrbitControls(this.core.activeCamera, this.core.renderer.domElement);
-  }
-
-  deactivate() {
-    this.onDeactivate();
-
-    if (!this._orbitControl) {
-      this.logWorker.warn('Already deactivated.');
-
-      return;
-    }
-
-    this._orbitControl.enabled = false;
+    this.orbitControl = new OrbitControls(this.maker.activeCamera, this.maker.canvas);
+    this.orbitControl.enabled = false;
   }
 
   initialize() {
     this.onInitialize();
 
-    if (!this._orbitControl) {
-      this.logWorker.warn('Already initialized.');
+    this.orbitControl = new OrbitControls(this.maker.activeCamera, this.maker.canvas);
+    this.orbitControl.enabled = false;
+  }
 
-      return;
-    }
+  activate() {
+    this.onActivate();
 
-    this._orbitControl.dispose();
-    this._orbitControl = null;
+    if (!this.orbitControl) throw this.logWorker.error('Not yet fully initialized.');
+
+    this.orbitControl.enabled = true;
+  }
+
+  deactivate() {
+    this.onDeactivate();
+
+    if (!this.orbitControl) throw this.logWorker.error('Not yet fully initialized.');
+
+    this.orbitControl.enabled = false;
+  }
+
+  clear() {
+    this.onClear();
+
+    if (!this.orbitControl) return;
+
+    this.orbitControl.dispose();
+    this.orbitControl = null;
   }
 }

@@ -6,26 +6,33 @@ import { MotorcycleIIIDM } from '@/3ds';
 import { useIIIDMStore } from '@/stores';
 
 const Page: React.FC = () => {
-  const { getNewMotorcycleIIIDM } = useIIIDMStore();
+  const { getMotorcycleIIIDM } = useIIIDMStore();
   const motorcycleIIIDMRef = useRef<MotorcycleIIIDM | null>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [opacityScore, setOpacityScore] = useState(1);
 
   const runMotorcycleIIIDM = () => {
     if (!canvasWrapperRef.current) throw new Error('Canvas wrapper not rendered yet.');
 
     if (!motorcycleIIIDMRef.current) {
-      const newMotorcycleIIIDM = getNewMotorcycleIIIDM();
+      const newMotorcycleIIIDM = getMotorcycleIIIDM();
 
       if (!newMotorcycleIIIDM) throw new Error('Failed to get new motorcycleIIIDM.');
 
       newMotorcycleIIIDM.appendCanvasTo(canvasWrapperRef.current);
       newMotorcycleIIIDM.onLoadProgressAction = progress => {
         setLoadProgress(progress);
+        console.info('Page progress:', progress);
       };
       newMotorcycleIIIDM.onLoadCompleteAction = () => {
         setIsLoaded(true);
+        console.info('Page loaded.');
+      };
+      newMotorcycleIIIDM.onLoadingSectionStart = opacityScore => {
+        setOpacityScore(opacityScore);
+        console.info('Loading section started.', opacityScore);
       };
       newMotorcycleIIIDM.activate();
       motorcycleIIIDMRef.current = newMotorcycleIIIDM;
@@ -66,6 +73,15 @@ const Page: React.FC = () => {
           {loadProgress}%
         </S.LoadProgressText>
       </S.LoadProgressOverlay>
+
+      {isLoaded && (
+        <S.Overlay isLoaded={isLoaded}>
+          <S.Title opacityScore={opacityScore}>
+            우리는 지속 가능한 미래 모빌리티를 만듭니다.
+          </S.Title>
+          <S.Title opacityScore={opacityScore}>새로움과 혁신을 담다, 세븐모빌리티</S.Title>
+        </S.Overlay>
+      )}
     </S.Container>
   );
 };

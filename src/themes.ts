@@ -16,7 +16,7 @@ export const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         ':root': {
-          fontFamily: 'Noto Sans KR, Ubuntu',
+          fontFamily: 'Noto Sans, Noto Sans KR',
           fontSize: '1rem',
           fontWeight: '400',
           fontSynthesis: 'none',
@@ -49,7 +49,7 @@ export const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: ['Noto Sans KR', 'Ubuntu'].join(','),
+    fontFamily: ['Noto Sans', 'Noto Sans KR'].join(','),
     fontSize: 14,
     fontWeightLight: 300,
     fontWeightRegular: 400,

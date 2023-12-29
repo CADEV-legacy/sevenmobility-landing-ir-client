@@ -1,64 +1,95 @@
-import { AnimationMixer, AnimationObjectGroup, Object3D, Object3DEventMap } from 'three';
+import {
+  AnimationClip,
+  AnimationMixer,
+  AnimationObjectGroup,
+  Object3D,
+  Object3DEventMap,
+} from 'three';
 
-import { IIIDMCore } from '@/IIIDM/IIIDMCore';
-import { IIIDMManager } from '@/IIIDM/IIIDMManager';
+import { IIIDM } from '@/IIIDM';
+import { IIIDMManager } from '@/IIIDM/managers';
 
 export class AnimationManager extends IIIDMManager {
-  private _animationMixer: AnimationMixer | null = null;
+  private animationMixer: AnimationMixer | null = null;
+  private _animationRootModel: Object3D<Object3DEventMap> | AnimationObjectGroup | null = null;
+  private _animationClip: AnimationClip | null = null;
 
-  constructor(core: IIIDMCore) {
-    super(core);
+  constructor(maker: IIIDM) {
+    super(maker);
   }
 
-  get animationMixer() {
-    if (!this._animationMixer) {
-      throw this.logWorker.error('Before get animationMixer, please activate AnimationManager.');
-    }
+  get animationRootModel() {
+    if (!this._animationRootModel)
+      throw this.logWorker.error(
+        'Before get animationRootModel, please initialize AnimationManager.'
+      );
 
-    return this._animationMixer;
+    return this._animationRootModel;
   }
 
-  activate(rootModel?: Object3D<Object3DEventMap> | AnimationObjectGroup) {
+  get animationClip() {
+    if (!this._animationClip)
+      throw this.logWorker.error('Before get animationClip, please initialize AnimationManager.');
+
+    return this._animationClip;
+  }
+
+  changeAnimation(
+    animationRootModel: Object3D<Object3DEventMap> | AnimationObjectGroup,
+    animationClip: AnimationClip
+  ) {
+    if (!this.animationMixer) throw this.logWorker.error('Not yet fully initialized.');
+
+    this.animationMixer.stopAllAction();
+    this.animationMixer.uncacheRoot(animationRootModel);
+
+    this._animationRootModel = animationRootModel;
+    this._animationClip = animationClip;
+    this.animationMixer = new AnimationMixer(animationRootModel);
+  }
+
+  changeAnimationClip(animationClip: AnimationClip) {
+    if (!this.animationMixer) throw this.logWorker.error('Not yet fully initialized.');
+
+    this.animationMixer.stopAllAction();
+    this.animationMixer.uncacheClip(animationClip);
+
+    this._animationClip = animationClip;
+  }
+
+  initialize(
+    animationRootModel: Object3D<Object3DEventMap> | AnimationObjectGroup,
+    animationClip: AnimationClip
+  ) {
+    this.onInitialize();
+
+    this._animationRootModel = animationRootModel;
+    this._animationClip = animationClip;
+    this.animationMixer = new AnimationMixer(animationRootModel);
+  }
+
+  activate() {
     this.onActivate();
 
-    if (!this._animationMixer) {
-      if (!rootModel) {
-        throw this.logWorker.error('On activate, rootModel is not set.');
-      }
+    if (!this.animationMixer) throw this.logWorker.error('There is no animationMixer.');
 
-      this._animationMixer = new AnimationMixer(rootModel);
-    }
+    this.animationMixer.clipAction(this.animationClip).play();
   }
 
   deactivate() {
     this.onDeactivate();
 
-    if (!this._animationMixer) {
-      this.logWorker.warn('Already deactivated.');
+    if (!this.animationMixer) throw this.logWorker.error('There is no animationMixer.');
 
-      return;
-    }
-
-    this._animationMixer.stopAllAction();
+    this.animationMixer.stopAllAction();
   }
 
-  initialize() {
-    this.onInitialize();
+  clear() {
+    this.onClear();
 
-    if (!this._animationMixer) {
-      this.logWorker.warn('Already initialized.');
+    if (!this.animationMixer) return;
 
-      return;
-    }
-
-    this._animationMixer = null;
-  }
-
-  changeRootModel(rootModel: Object3D<Object3DEventMap> | AnimationObjectGroup) {
-    if (this._animationMixer) {
-      this._animationMixer.stopAllAction();
-    }
-
-    this._animationMixer = new AnimationMixer(rootModel);
+    this.animationMixer.stopAllAction();
+    this.animationMixer = null;
   }
 }

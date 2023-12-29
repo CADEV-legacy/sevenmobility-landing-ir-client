@@ -6,25 +6,25 @@ import { CLIENT_SETTINGS } from '@/settings';
 
 type IIIDMStoreProps = {
   core: IIIDMCore | null;
-  motorCycleIIIDM?: MotorcycleIIIDM;
+  motorcycleIIIDM?: MotorcycleIIIDM;
 } & IIIDMStoreActions;
 
 interface IIIDMStoreActions {
-  getNewMotorcycleIIIDM(): MotorcycleIIIDM | null;
+  getMotorcycleIIIDM(): MotorcycleIIIDM | null;
 }
 
 export const useIIIDMStore = create<IIIDMStoreProps>((set, get) => ({
-  core: typeof window !== 'undefined' ? new IIIDMCore(false) : null,
-  getNewMotorcycleIIIDM: () => {
-    const { core, motorCycleIIIDM } = get();
+  core: typeof window !== 'undefined' ? new IIIDMCore(CLIENT_SETTINGS.isDevMode) : null,
+  getMotorcycleIIIDM: () => {
+    const { core, motorcycleIIIDM } = get();
 
     if (!core) return null;
 
-    if (motorCycleIIIDM) motorCycleIIIDM.dispose();
+    if (motorcycleIIIDM) return motorcycleIIIDM;
 
     const newMotorcycleIIIDM = new MotorcycleIIIDM(core);
 
-    set({ motorCycleIIIDM: newMotorcycleIIIDM });
+    set({ motorcycleIIIDM: newMotorcycleIIIDM });
 
     return newMotorcycleIIIDM;
   },

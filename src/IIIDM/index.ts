@@ -2,6 +2,7 @@ import {
   AxesHelper,
   CameraHelper,
   GridHelper,
+  Mesh,
   Object3D,
   Object3DEventMap,
   PerspectiveCamera,
@@ -10,50 +11,34 @@ import {
 } from 'three';
 
 import { IIIDMCore } from './IIIDMCore';
-import { IIIDMLogWorker } from './IIIDMLogWorker';
+
 import {
   AnimationManager,
   ControlManager,
   EffectManager,
   FrameManager,
-  FramePerSecond,
   GUIManager,
-  ResourceManager,
   ShaderManager,
-} from './managers';
+} from '@/IIIDM/managers';
+import { LogWorker, PhysicsWorker, ResourceWorker } from '@/IIIDM/workers';
 
-type CameraMap = {
-  key: string;
-  isActive: boolean;
-  object: PerspectiveCamera;
-};
+// NOTE: Default keys of camera and scene.
+export const DEFAULT_CAMERA_NAME = 'defaultCamera' as const;
+export const DEFAULT_SCENE_NAME = 'defaultScene' as const;
 
-type SceneMap = {
-  key: string;
-  isActive: boolean;
-  object: Scene;
-};
+// NOTE: Default keys of helpers.
+export const AXES_HELPER_NAME = 'axesHelper' as const;
+export const GRID_HELPER_NAME = 'gridHelper' as const;
+export const CAMERA_HELPER_NAME = 'cameraHelper' as const;
 
-type Object3dType = 'camera' | 'light' | 'helper' | 'mesh' | 'resource';
-
-type Object3DMap = {
-  type: Object3dType;
-  key: string;
-  object: Object3D<Object3DEventMap>;
-};
-
-export const DEFAULT_CAMERA_KEY = 'defaultCamera' as const;
-export const DEFAULT_SCENE_KEY = 'defaultScene' as const;
-export const AXES_HELPER_KEY = 'axesHelper' as const;
-export const GRID_HELPER_KEY = 'gridHelper' as const;
-export const CAMERA_HELPER_KEY = 'cameraHelper' as const;
+export const EMPTY_STRING = '';
 
 /**
  * NOTE: IIIDM is a class that manages the entire 3D scene.
- * - When constructing, if you have a IIIDMCore instance, you can pass it as an argument. (Make IIIDMCore as singleton.)
+ * - When constructing, IIIDMCore instance is required.
  * - As a result, IIIDMCore can reference only one IIIDM instance.
- * - Please using environment variable for set isDevMode. On isDevelopMode is true, all of loggers will be working. if not, all of loggers will not be working except for error logger. additionally, default isDevMode is true.
- * - Default camera and scene are created when IIIDM instance is constructed. (which named 'default')
+ * - Please using environment variable for set isDevMode. On isDevelopMode is true, all of loggers will be working. if not, all of loggers will not be working except for error logger. (additionally, default isDevMode is true.)
+ * - Default camera and scene are created when IIIDM instance is constructed. (which named starts with 'default')
  * - This class is abtract class, so you must inherit this class for make some 3D scene.
  * - When a class that inherited this class are activated, using onActivate function. then, IIIDMCore will reference that IIIDM instance.
  * - When a class that inherited this class are deactivated, using onDeactivate function. then, IIIDMCore will stop update that IIIDM instance. (And, related managers will be deactivated.)
@@ -62,193 +47,99 @@ export const CAMERA_HELPER_KEY = 'cameraHelper' as const;
  * TODO: Total log system should be implemented with structured ErrorClass.
  */
 export abstract class IIIDM {
-  protected canvas: HTMLCanvasElement;
-  protected renderer: WebGLRenderer;
-  protected activeCore: IIIDMCore;
   protected activeAnimationManager: AnimationManager;
   protected activeControlManager: ControlManager;
   protected activeEffectManager: EffectManager;
   protected activeFrameManager: FrameManager;
   protected activeGUIManager: GUIManager;
-  protected activeResourceManager: ResourceManager;
   protected activeShaderManager: ShaderManager;
-  protected logWorker: IIIDMLogWorker<this>;
-  protected cameraMaps: CameraMap[] = [];
-  protected sceneMaps: SceneMap[] = [];
-  protected object3DMaps: Object3DMap[] = [];
+  protected logWorker: LogWorker<this>;
+  protected physicsWorker: PhysicsWorker;
+  protected resourceWorker: ResourceWorker;
+  protected registeredCameras: PerspectiveCamera[] = [];
+  protected registeredScenes: Scene[] = [];
   protected isCanvasAppended: boolean = false;
-  protected fps: FramePerSecond;
-  protected isDevMode: boolean;
 
+  private _activeCore: IIIDMCore;
+  private _canvas: HTMLCanvasElement;
+  private _renderer: WebGLRenderer;
   private _activeCamera: PerspectiveCamera;
   private _activeScene: Scene;
   private _isActive: boolean = false;
   private _isInitialized: boolean = true;
+  private _isDevMode: boolean;
 
   constructor(_activeCore: IIIDMCore) {
-    this.activeCore = _activeCore;
-    this.isDevMode = this.activeCore.isDevMode;
+    this._activeCore = _activeCore;
+    this._isDevMode = this._activeCore.isDevMode;
 
-    this.canvas = this.activeCore.canvas;
-    this.renderer = this.activeCore.renderer;
+    this._canvas = this._activeCore.canvas;
+    this._renderer = this._activeCore.renderer;
 
-    const camera = new PerspectiveCamera(50, 1, 0.1, 1000);
-    const scene = new Scene();
+    const defaultCamera = new PerspectiveCamera(50, 1, 0.1, 1000);
 
-    this.sceneMaps = [{ key: DEFAULT_SCENE_KEY, isActive: true, object: scene }];
-    this.cameraMaps = [{ key: DEFAULT_CAMERA_KEY, isActive: true, object: camera }];
-    this.changeObject3DMap({ key: DEFAULT_CAMERA_KEY, type: 'camera', object: camera });
+    defaultCamera.name = DEFAULT_CAMERA_NAME;
 
-    this._activeCamera = camera;
-    this._activeScene = scene;
+    const defaultScene = new Scene();
+
+    defaultScene.name = DEFAULT_SCENE_NAME;
+
+    this.registeredScenes = [defaultScene];
+    this.registeredCameras = [defaultCamera];
+
+    this._activeCamera = defaultCamera;
+    this._activeScene = defaultScene;
+
+    this.activeAnimationManager = new AnimationManager(this);
+    this.activeControlManager = new ControlManager(this);
+    this.activeEffectManager = new EffectManager(this);
+    this.activeFrameManager = new FrameManager(this);
+    this.activeGUIManager = new GUIManager(this);
+    this.activeShaderManager = new ShaderManager(this);
+    this.logWorker = new LogWorker(this, this);
+    this.physicsWorker = new PhysicsWorker(this);
+    this.resourceWorker = new ResourceWorker(this);
+
+    this.addObjectsToScene(true, this._activeCamera);
 
     // NOTE: Add all events at here for work as devmode.
-    if (this.isDevMode) {
+    if (this._isDevMode) {
       const axesHelper = new AxesHelper(1000);
 
+      axesHelper.name = AXES_HELPER_NAME;
       // NOTE: Set axesHelper colors as x - R, y - B,  z - Y.
       axesHelper.setColors('#FF0000', '#0000FF', '#FFFF00');
 
       const gridHelper = new GridHelper(1000, 1000);
+
+      gridHelper.name = GRID_HELPER_NAME;
+
       const cameraHelper = new CameraHelper(this.activeCamera);
 
-      this.changeObject3DMap([
-        { key: AXES_HELPER_KEY, type: 'helper', object: axesHelper },
-        { key: GRID_HELPER_KEY, type: 'helper', object: gridHelper },
-        { key: CAMERA_HELPER_KEY, type: 'helper', object: cameraHelper },
-      ]);
-    }
+      cameraHelper.name = CAMERA_HELPER_NAME;
 
-    this.activeAnimationManager = this.activeCore.animationManager;
-    this.activeControlManager = this.activeCore.controlManager;
-    this.activeEffectManager = this.activeCore.effectManager;
-    this.activeFrameManager = this.activeCore.frameManager;
-    this.activeGUIManager = this.activeCore.guiManager;
-    this.activeResourceManager = this.activeCore.resourceManager;
-    this.activeShaderManager = this.activeCore.shaderManager;
-    this.logWorker = new IIIDMLogWorker(this, this.isDevMode);
-    this.fps = this.activeCore.frameManager.fps;
+      this.addObjectsToScene(true, axesHelper, gridHelper, cameraHelper);
+    }
+  }
+
+  get activeCore() {
+    return this._activeCore;
+  }
+
+  get canvas() {
+    return this._canvas;
+  }
+
+  get renderer() {
+    return this._renderer;
   }
 
   get activeCamera() {
     return this._activeCamera;
   }
 
-  /** NOTE: Using this function when active camera has changed. */
-  changeActiveCamera(newCameraMap: CameraMap) {
-    const targetCameraMap = this.cameraMaps.find(cameraMap => cameraMap.key === newCameraMap.key);
-
-    if (!targetCameraMap) {
-      this.cameraMaps.push({ ...newCameraMap, isActive: true });
-      this.changeObject3DMap({
-        key: newCameraMap.key,
-        type: 'camera',
-        object: newCameraMap.object,
-      });
-      this._activeCamera = newCameraMap.object;
-      this.logWorker.info('New camera is added.');
-
-      return;
-    }
-
-    this.cameraMaps.map(cameraMap => (cameraMap.isActive = false));
-    targetCameraMap.object = newCameraMap.object;
-    targetCameraMap.isActive = true;
-    this.changeObject3DMap({ key: newCameraMap.key, type: 'camera', object: newCameraMap.object });
-    this._activeCamera = targetCameraMap.object;
-
-    if (this.isDevMode) {
-      const cameraHelper = new CameraHelper(this.activeCamera);
-
-      this.changeObject3DMap({ key: CAMERA_HELPER_KEY, type: 'helper', object: cameraHelper });
-    }
-  }
-
   get activeScene() {
     return this._activeScene;
-  }
-
-  /** NOTE: Using this function when active scene has changed. */
-  changeActiveScene(newSceneMap: SceneMap) {
-    const targetSceneMap = this.sceneMaps.find(sceneMap => sceneMap.key === newSceneMap.key);
-
-    if (!targetSceneMap) {
-      this.sceneMaps.push({ ...newSceneMap, isActive: true });
-      this.logWorker.info('New scene is added.');
-
-      return;
-    }
-
-    this.sceneMaps.map(sceneMap => (sceneMap.isActive = false));
-    targetSceneMap.object = newSceneMap.object;
-    targetSceneMap.isActive = true;
-    this._activeScene = targetSceneMap.object;
-
-    this.changeActiveSceneObjects();
-  }
-
-  private changeActiveSceneObjects() {
-    const activeSceneMap = this.sceneMaps.find(sceneMap => sceneMap.isActive);
-
-    if (!activeSceneMap) {
-      throw this.logWorker.error('Active scene is not exist.');
-    }
-
-    activeSceneMap.object.clear();
-    activeSceneMap.object.add(...this.object3DMaps.map(object3DMap => object3DMap.object));
-  }
-
-  /** NOTE: Using this function when object3DMaps has changed. when this function is executed, automately add this object at active scene. */
-  changeObject3DMap(props: Object3DMap | Object3DMap[]) {
-    if (!Array.isArray(props)) {
-      const isObject3DMapDuplicated = !!this.object3DMaps.find(
-        object3DMap => object3DMap.key === props.key && object3DMap.type === props.type
-      );
-
-      if (isObject3DMapDuplicated) {
-        this.object3DMaps.map(object3DMap => {
-          if (object3DMap.key === props.key && object3DMap.type === props.type) {
-            object3DMap.object = props.object;
-          }
-        });
-
-        this.changeActiveSceneObjects();
-
-        return;
-      }
-
-      this.object3DMaps.push(props);
-
-      this.changeActiveSceneObjects();
-
-      return;
-    }
-
-    const isObject3DMapsDuplicated = !!props.find(
-      object3DMap =>
-        !!this.object3DMaps.find(
-          _object3DMap =>
-            _object3DMap.key === object3DMap.key && _object3DMap.type === object3DMap.type
-        )
-    );
-
-    if (isObject3DMapsDuplicated) {
-      props.map(object3DMap => {
-        this.object3DMaps.map(_object3DMap => {
-          if (_object3DMap.key === object3DMap.key && _object3DMap.type === object3DMap.type) {
-            _object3DMap.object = object3DMap.object;
-          }
-        });
-      });
-
-      this.changeActiveSceneObjects();
-
-      return;
-    }
-
-    this.object3DMaps.push(...props);
-
-    this.changeActiveSceneObjects();
   }
 
   get isActive() {
@@ -259,32 +150,185 @@ export abstract class IIIDM {
     return this._isInitialized;
   }
 
+  get isDevMode() {
+    return this._isDevMode;
+  }
+
   private initialize() {
-    const camera = new PerspectiveCamera(50, 1, 0.1, 1000);
-    const scene = new Scene();
-
-    this.sceneMaps = [{ key: 'default', isActive: true, object: scene }];
-    this.changeObject3DMap({ key: 'mainCamera', type: 'camera', object: camera });
-
-    this._activeCamera = camera;
-    this._activeScene = scene;
-
     // NOTE: Add all events at here for work as devmode.
-    if (this.isDevMode) {
+    if (this._isDevMode) {
       const axesHelper = new AxesHelper(1000);
 
+      axesHelper.name = AXES_HELPER_NAME;
       // NOTE: Set axesHelper colors as x - R, y - B,  z - Y.
       axesHelper.setColors('#FF0000', '#0000FF', '#FFFF00');
 
-      const gridHelper = new GridHelper(1000);
-      const cameraHelper = new CameraHelper(this._activeCamera);
+      const gridHelper = new GridHelper(1000, 1000);
 
-      this.changeObject3DMap([
-        { key: 'axes', type: 'helper', object: axesHelper },
-        { key: 'grid', type: 'helper', object: gridHelper },
-        { key: 'camera', type: 'helper', object: cameraHelper },
-      ]);
+      gridHelper.name = GRID_HELPER_NAME;
+
+      const cameraHelper = new CameraHelper(this.activeCamera);
+
+      cameraHelper.name = CAMERA_HELPER_NAME;
+
+      this.addObjectsToScene(true, axesHelper, gridHelper, cameraHelper);
     }
+  }
+
+  /** NOTE: Must use this function when you remove some object from scene. */
+  private disposeObject(object: Object3D<Object3DEventMap>) {
+    if (object instanceof Mesh) {
+      object.geometry.dispose();
+      object.material.dispose();
+    }
+
+    object.clear();
+  }
+
+  private deactivateManagers() {
+    this.activeAnimationManager.deactivate();
+    this.activeControlManager.deactivate();
+    this.activeEffectManager.deactivate();
+    this.activeFrameManager.deactivate();
+    this.activeGUIManager.deactivate();
+    this.activeShaderManager.deactivate();
+  }
+
+  private clearManagers() {
+    this.activeAnimationManager.clear();
+    this.activeControlManager.clear();
+    this.activeEffectManager.clear();
+    this.activeFrameManager.clear();
+    this.activeGUIManager.clear();
+    this.activeShaderManager.clear();
+  }
+
+  /**
+   * NOTE: When you want to add objects to scene, please using this method.
+   * - If you want to render after adding objects, please set isNeedRender as true.
+   * - Must set object name. (If not, it will be throw error.)
+   * - If you add object that has same name with other object, it will be replaced.
+   * - Other objects will be added to scene.
+   */
+  protected addObjectsToScene(isNeedRender: boolean, ...objects: Object3D<Object3DEventMap>[]) {
+    objects.forEach(object => {
+      if (object.name === EMPTY_STRING) throw this.logWorker.error('Object name is empty.');
+
+      const duplicatedObjectIndex = this._activeScene.children.findIndex(
+        child => child.name === object.name
+      );
+
+      if (duplicatedObjectIndex !== -1) {
+        this._activeScene.children[duplicatedObjectIndex].traverse(this.disposeObject);
+
+        this._activeCamera.children[duplicatedObjectIndex] = object;
+
+        return;
+      }
+
+      this._activeScene.add(object);
+    });
+
+    if (isNeedRender) this.render();
+  }
+
+  /**
+   * NOTE: When you want to remove objects from scene, please using this method.
+   * - If you want to render after removing objects, please set isNeedRender as true.
+   * - If name is not exist, it will be throw error.
+   * - When you remove object, it will be disposed including children object.
+   */
+  protected removeObjectsFromScene(isNeedRender: boolean, ...names: string[]) {
+    names.forEach(name => {
+      const targetObject = this._activeScene.getObjectByName(name);
+
+      if (!targetObject)
+        throw this.logWorker.error(`Object name with ${name} is not exist. can't remove it.`);
+
+      targetObject.traverse(this.disposeObject);
+
+      this._activeScene.remove(targetObject);
+    });
+
+    if (isNeedRender) this.render();
+  }
+
+  /**
+   * NOTE: When you want to change active camera, just using this.
+   * - If name is not exist, it will be throw error.
+   * - When you change active camera, exist active camera will be removed from scene. and new active camera will be added to scene.
+   * - Automatically, render will be called.
+   */
+  protected changeActiveCameraTo(name: string) {
+    const cameraIndex = this.registeredCameras.findIndex(camera => camera.name === name);
+
+    if (cameraIndex === -1) throw this.logWorker.error(`Camera name with ${name} is not exist.`);
+
+    this.removeObjectsFromScene(false, this._activeCamera.name);
+
+    this._activeCamera = this.registeredCameras[cameraIndex];
+
+    this.addObjectsToScene(true, this._activeCamera);
+  }
+
+  /**
+   * NOTE: When you want to add or update camera, just using this.
+   * - If name is not exist, it will be throw error.
+   * - When your new camera has same name with other camera, it will be replaced.
+   * - If not, it will be added to registered cameras.
+   */
+  protected registerCamera(camera: PerspectiveCamera) {
+    if (camera.name === EMPTY_STRING) throw this.logWorker.error('Camera name is required.');
+
+    const duplicatedCameraIndex = this.registeredCameras.findIndex(
+      registeredCamera => registeredCamera.name === camera.name
+    );
+
+    if (duplicatedCameraIndex !== -1) {
+      this.registeredCameras[duplicatedCameraIndex] = camera;
+
+      return;
+    }
+
+    this.registeredCameras.push(camera);
+  }
+
+  /**
+   * NOTE: When you want to change active scene, just using this.
+   * - If name is not exist, it will be throw error.
+   * - If you want to render after changing active scene, please set isNeedRender as true.
+   */
+  protected changeActiveSceneTo(name: string, isNeedRender: boolean) {
+    const sceneIndex = this.registeredScenes.findIndex(scene => scene.name === name);
+
+    if (sceneIndex === -1) throw this.logWorker.error(`Scene name with ${name} is not exist.`);
+
+    this._activeScene = this.registeredScenes[sceneIndex];
+
+    if (isNeedRender) this.render();
+  }
+
+  /**
+   * NOTE: When you want to add or update scene, just using this.
+   * - If name is not exist, it will be throw error.
+   * - When your new scene has same name with other scene, it will be replaced.
+   * - If not, it will be added to registered scenes.
+   */
+  protected registerScene(scene: Scene) {
+    if (scene.name === EMPTY_STRING) throw this.logWorker.error('Scene name is required.');
+
+    const duplicatedSceneIndex = this.registeredScenes.findIndex(
+      registeredScene => registeredScene.name === scene.name
+    );
+
+    if (duplicatedSceneIndex !== -1) {
+      this.registeredScenes[duplicatedSceneIndex].traverse(this.disposeObject);
+      this.registeredScenes[duplicatedSceneIndex] = scene;
+
+      return;
+    }
+
+    this.registeredScenes.push(scene);
   }
 
   /** NOTE: When IIIDM instance is used, must using this function to append canvas to target. */
@@ -295,7 +339,6 @@ export abstract class IIIDM {
     this.resize();
   }
 
-  /** NOTE: At resize, must using this method. */
   protected onResize() {
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
 
@@ -309,13 +352,6 @@ export abstract class IIIDM {
     this.renderer.render(this._activeScene, this._activeCamera);
   }
 
-  /**
-   * NOTE: At activate, must using this method.
-   * - Check status for run core. (And all of managers.)
-   * - If IIIDM instance is active, return.
-   * - If canvas is not appended, throw error.
-   * - When this method is called, _isInitialized will be false for check that this instance has been changed.
-   */
   protected onActivate() {
     if (this._isActive) throw this.logWorker.error('IIIDM instance is already activated.');
 
@@ -325,46 +361,32 @@ export abstract class IIIDM {
 
     this._isActive = true;
 
-    // NOTE: When IIIDM instance is changed, IIIDMCore will clear all managers.
-    if (this.activeCore.activeIIIDM !== this) {
-      this.activeCore.changeIIIDM(this);
-    }
+    this._activeCore.changeIIIDM(this);
 
-    if (this.isDevMode) {
+    if (this._isDevMode) {
+      this.activeGUIManager.initialize();
       this.activeGUIManager.activate();
     }
   }
 
-  /**
-   * NOTE: At deactivate, must using this method.
-   * - Deactivate all managers.
-   */
   protected onDeactivate() {
     if (!this._isActive) throw this.logWorker.error('IIIDM instance is not activated.');
 
     this._isActive = false;
 
-    this.activeCore.deactivateManager();
+    this.deactivateManagers();
   }
 
-  /**
-   * NOTE: At dispose, must using this method.
-   * - Initialize all managers.
-   * - Dispose renderer and renderLists.
-   * - Clear active scene.
-   * - Clear active camera.
-   * - Initialize cameraMaps, sceneMaps, object3DMaps.
-   */
   protected onDispose() {
     if (this._isActive) this._isActive = false;
 
-    this.activeCore.initializeManager();
+    this._activeScene.traverse(this.disposeObject);
+    this._activeScene.clear();
+    this._activeCamera.clear();
+    this.clearManagers();
     this.renderer.renderLists.dispose();
     this.renderer.dispose();
     this.renderer.clear();
-    this._activeScene.clear();
-    this._activeCamera.clear();
-    this.object3DMaps.map(object3DMap => object3DMap.object.clear());
 
     if (!this.isInitialized) {
       this.logWorker.info('IIIDM instance has some changes. and initialize all of them.');
@@ -373,13 +395,17 @@ export abstract class IIIDM {
     }
   }
 
-  abstract resize(): void;
-
-  abstract render(): void;
-
-  abstract activate(): void;
-
-  abstract deactivate(): void;
-
+  // NOTE: Essential methods for using IIIDM instance.
+  /** NOTE: Using onResize before declare other things. */
+  protected abstract resize(): void;
+  /** NOTE: Using onRender before declare other things. */
+  protected abstract render(): void;
+  /** NOTE: Using onActivate before declare other things. */
+  protected abstract activate(): void;
+  /** NOTE: Using onDeactivate before declare other things. */
+  protected abstract deactivate(): void;
+  /** NOTE: Using onDispose before declare other things. */
   abstract dispose(): void;
 }
+
+export { IIIDMCore };
