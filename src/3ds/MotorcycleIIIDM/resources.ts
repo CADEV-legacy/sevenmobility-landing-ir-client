@@ -7,6 +7,14 @@ const LOADING_SECTION_DATA = {
     motorcycle: 'motorcycle',
     groundMirror: 'groundMirror',
   },
+  background: {
+    color: new Color(0x000000),
+    fog: {
+      color: new Color(0xffffff),
+      near: 0.1,
+      far: 100,
+    },
+  },
   camera: {
     position: new Vector3(-2, 1, 0),
     lookAt: new Vector3(0, 1, 0),
@@ -24,16 +32,39 @@ const LOADING_SECTION_DATA = {
       key: 'light',
       emissiveColor: new Color(0xffffff),
       emissiveIntensity: 0.1,
-      changedEmissiveIntensity: 1.5,
+      changedEmissiveIntensity: 0.8,
     },
     initialVelocity: 0.12,
     acceleration: 0.0014,
   },
   bloomEffect: {
     layerDepth: 1,
-    strength: 5,
-    radius: 0.8,
-    threshold: 1,
+    strength: 1.5,
+    radius: 1,
+    threshold: 0.1,
+    vertex: `
+    varying vec2 vUv;
+
+    void main() {
+
+      vUv = uv;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+    }
+  `,
+    fragment: `
+    uniform sampler2D baseTexture;
+    uniform sampler2D bloomTexture;
+
+    varying vec2 vUv;
+
+    void main() {
+
+      gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
+
+    }
+  `,
   },
   smoke: {
     opacity: {

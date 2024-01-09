@@ -1,5 +1,16 @@
-import { DirectionalLight, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
-import { GLTF } from 'three-stdlib';
+import {
+  DirectionalLight,
+  Layers,
+  Mesh,
+  MeshStandardMaterial,
+  ShaderMaterial,
+  Vector2,
+} from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 import { GroundMirror, Smoke } from './components';
 import { SECTION_DATA, SectionType } from './resources';
@@ -10,10 +21,6 @@ import { OnLoadCompleteAction, OnLoadProgressAction } from '@/IIIDM/workers';
 export class MotorcycleIIIDM extends IIIDM {
   private sectionType: SectionType;
 
-  private smoke: Smoke;
-  private groundMirror: GroundMirror;
-  private motorcycle: GLTF | null = null;
-
   private motorcycleVelocity: number;
 
   constructor(core: IIIDMCore) {
@@ -21,14 +28,16 @@ export class MotorcycleIIIDM extends IIIDM {
 
     this.sectionType = 'loading';
 
-    this.smoke = new Smoke(
+    this.activeScene.background = SECTION_DATA.loading.background.color;
+
+    const smoke = new Smoke(
       SECTION_DATA.loading.objectName.smoke,
       SECTION_DATA.loading.smoke.opacity.initialValue,
       SECTION_DATA.loading.smoke.opacity.additionalValue,
       SECTION_DATA.loading.smoke.rotation.additionalValue
     );
 
-    this.groundMirror = new GroundMirror(
+    const groundMirror = new GroundMirror(
       this.canvas.clientWidth,
       this.canvas.clientHeight,
       SECTION_DATA.loading.groundMirror.color,
@@ -38,14 +47,22 @@ export class MotorcycleIIIDM extends IIIDM {
     this.motorcycleVelocity = SECTION_DATA.loading.motorcycle.initialVelocity;
 
     this.frameManager.initialize();
-    this.controlManager.initialize();
-    this.effectManager.initialize(
-      SECTION_DATA.loading.bloomEffect.strength,
-      SECTION_DATA.loading.bloomEffect.radius,
-      SECTION_DATA.loading.bloomEffect.threshold,
-      'selective',
-      SECTION_DATA.loading.bloomEffect.layerDepth
+
+    const directionalLight = new DirectionalLight(
+      SECTION_DATA.loading.directionalLight.color,
+      SECTION_DATA.loading.directionalLight.intensity
     );
+
+    directionalLight.position.add(SECTION_DATA.loading.directionalLight.position);
+    directionalLight.target.position.add(SECTION_DATA.loading.directionalLight.targetPosition);
+    directionalLight.name = SECTION_DATA.loading.objectName.directionalLight;
+
+    this.activeCamera.position.add(SECTION_DATA.loading.camera.position);
+    this.activeCamera.lookAt(SECTION_DATA.loading.camera.lookAt);
+
+    this.activeCamera.updateProjectionMatrix();
+
+    this.addObjectsToScene(false, smoke.smokeMesh, groundMirror.mirror, directionalLight);
   }
 
   // NOTE: Below functions are must set on page before activate.
@@ -57,39 +74,13 @@ export class MotorcycleIIIDM extends IIIDM {
     this.resourceWorker.onLoadCompleteAction = action;
   }
 
-  // set onLoadingSectionStart(action: OnLoadingSectionStart) {
-  //   this.loadingSectionStartAction = action;
-  // }
-
-  private updateControl() {
-    this.controlManager.orbitControl.update();
-  }
-
-  // private changeHeadLightIntensity(intensity: number) {
-  //   this.motorcycleModel?.scene.traverse(object => {
-  //     if (
-  //       object instanceof Mesh &&
-  //       object.isMesh &&
-  //       object.name === LOADING_SECTION_DATA.loadMotorcycle.motorcycle.headLight.key &&
-  //       object.material instanceof MeshStandardMaterial &&
-  //       object.material.isMaterial &&
-  //       object.material.name ===
-  //         `${LOADING_SECTION_DATA.loadMotorcycle.motorcycle.headLight.key}_material`
-  //     ) {
-  //       object.material.emissive =
-  //         LOADING_SECTION_DATA.loadMotorcycle.motorcycle.headLight.emissiveColor;
-  //       object.material.emissiveIntensity = intensity;
-  //     }
-  //   });
-  // }
-
-  private async loading() {
+  private async loadMotorcycle() {
     try {
-      this.motorcycle = await this.resourceWorker.loadResource(
+      const motorcycle = await this.resourceWorker.loadResource(
         SECTION_DATA.loading.motorcycle.path
       );
 
-      this.motorcycle.scene.traverse(object => {
+      motorcycle.scene.traverse(object => {
         if (
           object instanceof Mesh &&
           object.isMesh &&
@@ -103,37 +94,21 @@ export class MotorcycleIIIDM extends IIIDM {
             SECTION_DATA.loading.motorcycle.headLight.emissiveIntensity;
         }
       });
-      this.motorcycle.scene.position.add(SECTION_DATA.loading.motorcycle.position);
-      this.motorcycle.scene.name = SECTION_DATA.loading.objectName.motorcycle;
+      motorcycle.scene.position.add(SECTION_DATA.loading.motorcycle.position);
+      motorcycle.scene.name = SECTION_DATA.loading.objectName.motorcycle;
 
-      const directionalLight = new DirectionalLight(
-        SECTION_DATA.loading.directionalLight.color,
-        SECTION_DATA.loading.directionalLight.intensity
-      );
-
-      directionalLight.position.add(SECTION_DATA.loading.directionalLight.position);
-      directionalLight.target.position.add(SECTION_DATA.loading.directionalLight.targetPosition);
-      directionalLight.name = SECTION_DATA.loading.objectName.directionalLight;
-
-      this.activeCamera.position.add(SECTION_DATA.loading.camera.position);
-      this.activeCamera.lookAt(SECTION_DATA.loading.camera.lookAt);
-
-      this.activeCamera.updateProjectionMatrix();
-
-      this.addObjectsToScene(
-        true,
-        this.motorcycle.scene,
-        directionalLight,
-        // this.smoke.smokeMesh
-        this.groundMirror.mirror
-      );
+      this.addObjectsToScene(true, motorcycle.scene);
     } catch (error) {
       throw this.logWorker.error('Failed to load model.', error);
     }
   }
 
   private startTheEngine() {
-    this.motorcycle?.scene.traverse(object => {
+    const bloomLayer = new Layers();
+
+    bloomLayer.set(SECTION_DATA.loading.bloomEffect.layerDepth);
+
+    this.activeScene.traverse(object => {
       if (
         object instanceof Mesh &&
         object.isMesh &&
@@ -149,8 +124,60 @@ export class MotorcycleIIIDM extends IIIDM {
       }
     });
 
-    this.effectManager.activate();
-    this.effectManager.render();
+    const bloomEffectComposer = new EffectComposer(this.renderer);
+
+    const renderScene = new RenderPass(this.activeScene, this.activeCamera);
+    const bloomPass = new UnrealBloomPass(
+      new Vector2(this.canvas.width, this.canvas.height),
+      SECTION_DATA.loading.bloomEffect.strength,
+      SECTION_DATA.loading.bloomEffect.radius,
+      SECTION_DATA.loading.bloomEffect.threshold
+    );
+
+    bloomEffectComposer.setPixelRatio(window.devicePixelRatio);
+    bloomEffectComposer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    bloomEffectComposer.addPass(renderScene);
+    bloomEffectComposer.addPass(bloomPass);
+    bloomEffectComposer.renderToScreen = false;
+
+    const finalEffectComposer = new EffectComposer(this.renderer);
+    finalEffectComposer.setPixelRatio(window.devicePixelRatio);
+    finalEffectComposer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+
+    const mixPass = new ShaderPass(
+      new ShaderMaterial({
+        uniforms: {
+          baseTexture: { value: null },
+          bloomTexture: { value: bloomEffectComposer.renderTarget2.texture },
+        },
+        vertexShader: SECTION_DATA.loading.bloomEffect.vertex,
+        fragmentShader: SECTION_DATA.loading.bloomEffect.fragment,
+        defines: {},
+      }),
+      'baseTexture'
+    );
+    mixPass.needsSwap = true;
+
+    const outputPass = new OutputPass();
+
+    finalEffectComposer.addPass(renderScene);
+    finalEffectComposer.addPass(mixPass);
+    finalEffectComposer.addPass(outputPass);
+
+    this.renderer.autoClear = false;
+    this.renderer.clear();
+
+    this.activeCamera.layers.set(SECTION_DATA.loading.bloomEffect.layerDepth);
+
+    bloomEffectComposer.render();
+
+    this.renderer.clearDepth();
+
+    this.activeCamera.layers.set(0);
+
+    finalEffectComposer.render();
+
+    this.renderer.autoClear = true;
   }
 
   // private closerCamera() {
@@ -248,22 +275,17 @@ export class MotorcycleIIIDM extends IIIDM {
   resize() {
     this.onResize();
 
-    if (this.effectManager.isActive) this.effectManager.resize();
-
     this.render();
   }
 
   render() {
-    if (this.effectManager.isActive) this.effectManager.render();
-    else this.onRender();
+    this.onRender();
   }
 
   async activate() {
     this.onActivate();
 
-    await this.loading();
-
-    // this.startTheEngine();
+    await this.loadMotorcycle();
 
     // this.effectManager.activate();
 

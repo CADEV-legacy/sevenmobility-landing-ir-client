@@ -15,7 +15,6 @@ import { IIIDMCore } from './IIIDMCore';
 import {
   AnimationManager,
   ControlManager,
-  EffectManager,
   FrameManager,
   GUIManager,
   ShaderManager,
@@ -50,7 +49,6 @@ export abstract class IIIDM {
   // NOTE: Managers.
   private _animationManager: AnimationManager;
   private _controlManager: ControlManager;
-  private _effectManager: EffectManager;
   private _frameManager: FrameManager;
   private _GUIManager: GUIManager;
   private _shaderManager: ShaderManager;
@@ -102,7 +100,6 @@ export abstract class IIIDM {
 
     this._animationManager = new AnimationManager(this);
     this._controlManager = new ControlManager(this);
-    this._effectManager = new EffectManager(this);
     this._frameManager = new FrameManager(this);
     this._GUIManager = new GUIManager(this);
     this._shaderManager = new ShaderManager(this);
@@ -137,10 +134,6 @@ export abstract class IIIDM {
 
   get controlManager() {
     return this._controlManager;
-  }
-
-  get effectManager() {
-    return this._effectManager;
   }
 
   get frameManager() {
@@ -250,7 +243,6 @@ export abstract class IIIDM {
   deactivateManagers() {
     this._animationManager.deactivate();
     this._controlManager.deactivate();
-    this._effectManager.deactivate();
     this._frameManager.deactivate();
     this._GUIManager.deactivate();
     this._shaderManager.deactivate();
@@ -259,7 +251,6 @@ export abstract class IIIDM {
   clearManagers() {
     this._animationManager.clear();
     this._controlManager.clear();
-    this._effectManager.clear();
     this._frameManager.clear();
     this._GUIManager.clear();
     this._shaderManager.clear();

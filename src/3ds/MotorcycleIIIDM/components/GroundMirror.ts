@@ -1,5 +1,5 @@
 import { Color, PlaneGeometry } from 'three';
-import { Reflector } from 'three-stdlib';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 
 export class GroundMirror {
   private _mirror: Reflector;
