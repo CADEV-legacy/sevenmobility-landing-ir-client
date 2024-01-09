@@ -28,11 +28,9 @@ const Page: React.FC = () => {
       };
       newMotorcycleIIIDM.onLoadCompleteAction = () => {
         setIsLoaded(true);
-        console.info('Page loaded.');
       };
-      newMotorcycleIIIDM.onLoadingSectionStart = opacityScore => {
+      newMotorcycleIIIDM.onHideTitleAction = opacityScore => {
         setOpacityScore(opacityScore);
-        console.info('Loading section started.', opacityScore);
       };
       newMotorcycleIIIDM.activate();
       motorcycleIIIDMRef.current = newMotorcycleIIIDM;
@@ -72,9 +70,8 @@ const Page: React.FC = () => {
           <br />
           {loadProgress}%
         </S.LoadProgressText>
-      </S.LoadProgressOverlay> */}
-
-      {/* {isLoaded && (
+      </S.LoadProgressOverlay>
+      {isLoaded && (
         <S.Overlay isLoaded={isLoaded}>
           <S.Title opacityScore={opacityScore}>
             우리는 지속 가능한 미래 모빌리티를 만듭니다.

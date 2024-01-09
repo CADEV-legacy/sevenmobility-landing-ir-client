@@ -140,6 +140,8 @@ export class FrameManager extends IIIDMManager {
 
       this.clearAnimationFrame();
 
+      this.deactivate();
+
       return;
     }
 

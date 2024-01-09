@@ -1,10 +1,12 @@
 import {
+  Color,
   DirectionalLight,
   Layers,
   Mesh,
   MeshStandardMaterial,
   ShaderMaterial,
   Vector2,
+  Vector3,
 } from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
@@ -18,10 +20,15 @@ import { SECTION_DATA, SectionType } from './resources';
 import { IIIDM, IIIDMCore } from '@/IIIDM';
 import { OnLoadCompleteAction, OnLoadProgressAction } from '@/IIIDM/workers';
 
+type onHideTitleAction = (opacityScore: number) => void;
+
 export class MotorcycleIIIDM extends IIIDM {
   private sectionType: SectionType;
 
-  private motorcycleVelocity: number;
+  private motorcycleVelocity = SECTION_DATA.loading.motorcycle.velocity.initialValue;
+  private titleOpacityScore = 1;
+  private titleOpacityScoreSub = SECTION_DATA.loading.title.opacityScore.sub.initialValue;
+  private _onHideTitleAction: onHideTitleAction | null = null;
 
   constructor(core: IIIDMCore) {
     super(core);
@@ -44,25 +51,17 @@ export class MotorcycleIIIDM extends IIIDM {
       SECTION_DATA.loading.groundMirror.name
     );
 
-    this.motorcycleVelocity = SECTION_DATA.loading.motorcycle.initialVelocity;
-
     this.frameManager.initialize();
 
-    const directionalLight = new DirectionalLight(
-      SECTION_DATA.loading.directionalLight.color,
-      SECTION_DATA.loading.directionalLight.intensity
-    );
-
-    directionalLight.position.add(SECTION_DATA.loading.directionalLight.position);
-    directionalLight.target.position.add(SECTION_DATA.loading.directionalLight.targetPosition);
-    directionalLight.name = SECTION_DATA.loading.objectName.directionalLight;
+    // TODO: Remove this comment.
+    this.controlManager.initialize();
 
     this.activeCamera.position.add(SECTION_DATA.loading.camera.position);
     this.activeCamera.lookAt(SECTION_DATA.loading.camera.lookAt);
 
     this.activeCamera.updateProjectionMatrix();
 
-    this.addObjectsToScene(false, smoke.smokeMesh, groundMirror.mirror, directionalLight);
+    this.addObjectsToScene(false, smoke.smokeMesh, groundMirror.mirror);
   }
 
   // NOTE: Below functions are must set on page before activate.
@@ -72,6 +71,17 @@ export class MotorcycleIIIDM extends IIIDM {
 
   set onLoadCompleteAction(action: OnLoadCompleteAction) {
     this.resourceWorker.onLoadCompleteAction = action;
+  }
+
+  set onHideTitleAction(action: onHideTitleAction) {
+    this._onHideTitleAction = action;
+  }
+
+  // TODO: Remove this function.
+  private updateControl() {
+    this.controlManager.orbitControl.update();
+
+    this.activeCamera.updateProjectionMatrix();
   }
 
   private async loadMotorcycle() {
@@ -89,9 +99,8 @@ export class MotorcycleIIIDM extends IIIDM {
           object.material.isMaterial &&
           object.material.name === `${SECTION_DATA.loading.motorcycle.headLight.key}_material`
         ) {
-          object.material.emissive = SECTION_DATA.loading.motorcycle.headLight.emissiveColor;
-          object.material.emissiveIntensity =
-            SECTION_DATA.loading.motorcycle.headLight.emissiveIntensity;
+          object.material.emissive = new Color(0x000000);
+          object.material.emissiveIntensity = 0;
         }
       });
       motorcycle.scene.position.add(SECTION_DATA.loading.motorcycle.position);
@@ -101,6 +110,110 @@ export class MotorcycleIIIDM extends IIIDM {
     } catch (error) {
       throw this.logWorker.error('Failed to load model.', error);
     }
+  }
+
+  private async hideTitle() {
+    return new Promise<void>((resolve, reject) => {
+      const onHideTitle = () => {
+        if (!this._onHideTitleAction)
+          return reject(this.logWorker.error('onHideTitleAction is not set.'));
+
+        if (this.titleOpacityScore <= 0) {
+          this.frameManager.removeFrameUpdateAction(onHideTitle.name);
+          return resolve();
+        }
+
+        this.titleOpacityScoreSub += SECTION_DATA.loading.title.opacityScore.sub.additionalValue;
+
+        this._onHideTitleAction((this.titleOpacityScore -= this.titleOpacityScoreSub));
+      };
+
+      this.frameManager.addFrameUpdateAction({
+        name: onHideTitle.name,
+        action: onHideTitle.bind(this),
+      });
+      this.frameManager.activate();
+    });
+  }
+
+  private showMotorcycle() {
+    this.activeScene.traverse(object => {
+      if (
+        object instanceof Mesh &&
+        object.isMesh &&
+        object.name === SECTION_DATA.loading.motorcycle.headLight.key &&
+        object.material instanceof MeshStandardMaterial &&
+        object.material.isMaterial &&
+        object.material.name === `${SECTION_DATA.loading.motorcycle.headLight.key}_material`
+      ) {
+        object.material.emissive = SECTION_DATA.loading.motorcycle.headLight.emissiveColor;
+        object.material.emissiveIntensity =
+          SECTION_DATA.loading.motorcycle.headLight.emissiveIntensity;
+      }
+    });
+
+    const directionalLight = new DirectionalLight(
+      SECTION_DATA.loading.directionalLight.color,
+      SECTION_DATA.loading.directionalLight.intensity
+    );
+
+    directionalLight.position.add(SECTION_DATA.loading.directionalLight.position);
+    directionalLight.target.position.add(SECTION_DATA.loading.directionalLight.targetPosition);
+    directionalLight.name = SECTION_DATA.loading.objectName.directionalLight;
+
+    this.addObjectsToScene(true, directionalLight);
+  }
+
+  private closerMotorcycle() {
+    return new Promise<void>(resolve => {
+      let currentMotorcyclePosition: number | null = null;
+      let currentDirectionalLightIntensity: number | null = null;
+
+      const runMotorcycle = () => {
+        if (this.motorcycleVelocity >= SECTION_DATA.loading.motorcycle.velocity.minimumValue) {
+          this.motorcycleVelocity -= SECTION_DATA.loading.motorcycle.velocity.acceleration;
+        } else {
+          this.motorcycleVelocity -= SECTION_DATA.loading.motorcycle.velocity.minimumAcceleration;
+        }
+
+        if (
+          !currentDirectionalLightIntensity ||
+          currentDirectionalLightIntensity <= SECTION_DATA.loading.directionalLight.maxIntensity
+        ) {
+          this.activeScene.traverse(object => {
+            if (
+              object instanceof DirectionalLight &&
+              object.name === SECTION_DATA.loading.objectName.directionalLight
+            ) {
+              object.intensity += 0.08;
+
+              currentDirectionalLightIntensity = object.intensity;
+            }
+          });
+        }
+
+        if (
+          currentMotorcyclePosition &&
+          currentMotorcyclePosition <= SECTION_DATA.loading.motorcycle.closedPosition
+        ) {
+          this.frameManager.removeFrameUpdateAction(runMotorcycle.name);
+          return resolve();
+        }
+
+        this.activeScene.traverse(object => {
+          if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+            object.position.add(new Vector3(-this.motorcycleVelocity, 0, 0));
+
+            currentMotorcyclePosition = object.position.x;
+          }
+        });
+      };
+
+      this.frameManager.addFrameUpdateAction({
+        name: runMotorcycle.name,
+        action: runMotorcycle.bind(this),
+      });
+    });
   }
 
   private startTheEngine() {
@@ -287,16 +400,23 @@ export class MotorcycleIIIDM extends IIIDM {
 
     await this.loadMotorcycle();
 
-    // this.effectManager.activate();
+    await this.hideTitle();
 
-    // this.controlManager.orbitControl.target = SECTION_DATA.loading.camera.lookAt;
-    // this.controlManager.orbitControl.update();
-    // this.controlManager.activate();
+    this.showMotorcycle();
 
-    // this.frameManager.addFrameUpdateAction({
-    //   name: 'updateControl',
-    //   action: this.updateControl.bind(this),
-    // });
+    await this.closerMotorcycle();
+
+    this.startTheEngine();
+
+    // TODO: Remove this comment.
+    this.controlManager.orbitControl.target = SECTION_DATA.loading.camera.lookAt;
+    this.controlManager.orbitControl.update();
+    this.controlManager.activate();
+
+    this.frameManager.addFrameUpdateAction({
+      name: this.updateControl.name,
+      action: this.updateControl.bind(this),
+    });
     // this.frameManager.activate();
   }
 

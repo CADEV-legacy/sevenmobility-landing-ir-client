@@ -9,33 +9,34 @@ const LOADING_SECTION_DATA = {
   },
   background: {
     color: new Color(0x000000),
-    fog: {
-      color: new Color(0xffffff),
-      near: 0.1,
-      far: 100,
-    },
   },
   camera: {
-    position: new Vector3(-2, 1, 0),
+    position: new Vector3(-4, 1.5, 0),
     lookAt: new Vector3(0, 1, 0),
   },
   directionalLight: {
     color: new Color(0xffffff),
-    intensity: 1,
+    intensity: 0.1,
+    maxIntensity: 2,
     position: new Vector3(-1, 1, 0),
     targetPosition: new Vector3(0, 1, 0),
   },
   motorcycle: {
     path: '/3ds/models/motorcycle.glb',
-    position: new Vector3(5, 0, 0),
+    position: new Vector3(20, 0, 0),
     headLight: {
       key: 'light',
       emissiveColor: new Color(0xffffff),
-      emissiveIntensity: 0.1,
+      emissiveIntensity: 1.5,
       changedEmissiveIntensity: 0.8,
     },
-    initialVelocity: 0.12,
-    acceleration: 0.0014,
+    velocity: {
+      initialValue: 0.6,
+      minimumValue: 0.05,
+      acceleration: 0.01,
+      minimumAcceleration: 0.0001,
+    },
+    closedPosition: 0,
   },
   bloomEffect: {
     layerDepth: 1,
@@ -78,6 +79,14 @@ const LOADING_SECTION_DATA = {
   groundMirror: {
     color: new Color(0x151515),
     name: 'groundMirror',
+  },
+  title: {
+    opacityScore: {
+      sub: {
+        initialValue: 0,
+        additionalValue: 0.0008,
+      },
+    },
   },
 };
 
