@@ -1,1 +1,1 @@
-export { MotorcycleIIIDM } from './MotorcycleIIIDM';
+export * from './MotorcycleIIIDM';

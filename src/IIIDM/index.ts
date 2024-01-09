@@ -47,27 +47,37 @@ export const EMPTY_STRING = '';
  * TODO: Total log system should be implemented with structured ErrorClass.
  */
 export abstract class IIIDM {
-  protected activeAnimationManager: AnimationManager;
-  protected activeControlManager: ControlManager;
-  protected activeEffectManager: EffectManager;
-  protected activeFrameManager: FrameManager;
-  protected activeGUIManager: GUIManager;
-  protected activeShaderManager: ShaderManager;
-  protected logWorker: LogWorker<this>;
-  protected physicsWorker: PhysicsWorker;
-  protected resourceWorker: ResourceWorker;
-  protected registeredCameras: PerspectiveCamera[] = [];
-  protected registeredScenes: Scene[] = [];
-  protected isCanvasAppended: boolean = false;
+  // NOTE: Managers.
+  private _animationManager: AnimationManager;
+  private _controlManager: ControlManager;
+  private _effectManager: EffectManager;
+  private _frameManager: FrameManager;
+  private _GUIManager: GUIManager;
+  private _shaderManager: ShaderManager;
 
+  // NOTE: Workers.
+  private _logWorker: LogWorker<this>;
+  private _physicsWorker: PhysicsWorker;
+  private _resourceWorker: ResourceWorker;
+
+  // NOTE: Registered objects that maintain singletone.
+  private _registeredCameras: PerspectiveCamera[] = [];
+  private _registeredScenes: Scene[] = [];
+
+  // NOTE: Active objects. (One of registered objects.)
   private _activeCore: IIIDMCore;
-  private _canvas: HTMLCanvasElement;
-  private _renderer: WebGLRenderer;
   private _activeCamera: PerspectiveCamera;
   private _activeScene: Scene;
+
+  // NOTE: Essential properties.
+  private _canvas: HTMLCanvasElement;
+  private _renderer: WebGLRenderer;
+
+  // NOTE: Flags.
   private _isActive: boolean = false;
   private _isInitialized: boolean = true;
   private _isDevMode: boolean;
+  private _isCanvasAppended: boolean = false;
 
   constructor(_activeCore: IIIDMCore) {
     this._activeCore = _activeCore;
@@ -84,23 +94,21 @@ export abstract class IIIDM {
 
     defaultScene.name = DEFAULT_SCENE_NAME;
 
-    this.registeredScenes = [defaultScene];
-    this.registeredCameras = [defaultCamera];
+    this._registeredScenes = [defaultScene];
+    this._registeredCameras = [defaultCamera];
 
     this._activeCamera = defaultCamera;
     this._activeScene = defaultScene;
 
-    this.activeAnimationManager = new AnimationManager(this);
-    this.activeControlManager = new ControlManager(this);
-    this.activeEffectManager = new EffectManager(this);
-    this.activeFrameManager = new FrameManager(this);
-    this.activeGUIManager = new GUIManager(this);
-    this.activeShaderManager = new ShaderManager(this);
-    this.logWorker = new LogWorker(this, this);
-    this.physicsWorker = new PhysicsWorker(this);
-    this.resourceWorker = new ResourceWorker(this);
-
-    this.addObjectsToScene(true, this._activeCamera);
+    this._animationManager = new AnimationManager(this);
+    this._controlManager = new ControlManager(this);
+    this._effectManager = new EffectManager(this);
+    this._frameManager = new FrameManager(this);
+    this._GUIManager = new GUIManager(this);
+    this._shaderManager = new ShaderManager(this);
+    this._logWorker = new LogWorker(this, this);
+    this._physicsWorker = new PhysicsWorker(this);
+    this._resourceWorker = new ResourceWorker(this);
 
     // NOTE: Add all events at here for work as devmode.
     if (this._isDevMode) {
@@ -114,7 +122,7 @@ export abstract class IIIDM {
 
       gridHelper.name = GRID_HELPER_NAME;
 
-      const cameraHelper = new CameraHelper(this.activeCamera);
+      const cameraHelper = new CameraHelper(this._activeCamera);
 
       cameraHelper.name = CAMERA_HELPER_NAME;
 
@@ -122,16 +130,56 @@ export abstract class IIIDM {
     }
   }
 
+  // NOTE: Getters for managers.
+  get animationManager() {
+    return this._animationManager;
+  }
+
+  get controlManager() {
+    return this._controlManager;
+  }
+
+  get effectManager() {
+    return this._effectManager;
+  }
+
+  get frameManager() {
+    return this._frameManager;
+  }
+
+  get GUIManager() {
+    return this._GUIManager;
+  }
+
+  get shaderManager() {
+    return this._shaderManager;
+  }
+
+  // NOTE: Getters for workers.
+  get logWorker() {
+    return this._logWorker;
+  }
+
+  get physicsWorker() {
+    return this._physicsWorker;
+  }
+
+  get resourceWorker() {
+    return this._resourceWorker;
+  }
+
+  // NOTE: Getters for registered objects.
+  get registeredCameras() {
+    return this._registeredCameras;
+  }
+
+  get registeredScenes() {
+    return this._registeredScenes;
+  }
+
+  // NOTE: Getters for active objects.
   get activeCore() {
     return this._activeCore;
-  }
-
-  get canvas() {
-    return this._canvas;
-  }
-
-  get renderer() {
-    return this._renderer;
   }
 
   get activeCamera() {
@@ -142,6 +190,16 @@ export abstract class IIIDM {
     return this._activeScene;
   }
 
+  // NOTE: Getters for essential properties.
+  get canvas() {
+    return this._canvas;
+  }
+
+  get renderer() {
+    return this._renderer;
+  }
+
+  // NOTE: Getters for flags.
   get isActive() {
     return this._isActive;
   }
@@ -152,6 +210,10 @@ export abstract class IIIDM {
 
   get isDevMode() {
     return this._isDevMode;
+  }
+
+  get isCanvasAppended() {
+    return this._isCanvasAppended;
   }
 
   private initialize() {
@@ -167,7 +229,7 @@ export abstract class IIIDM {
 
       gridHelper.name = GRID_HELPER_NAME;
 
-      const cameraHelper = new CameraHelper(this.activeCamera);
+      const cameraHelper = new CameraHelper(this._activeCamera);
 
       cameraHelper.name = CAMERA_HELPER_NAME;
 
@@ -185,22 +247,22 @@ export abstract class IIIDM {
     object.clear();
   }
 
-  private deactivateManagers() {
-    this.activeAnimationManager.deactivate();
-    this.activeControlManager.deactivate();
-    this.activeEffectManager.deactivate();
-    this.activeFrameManager.deactivate();
-    this.activeGUIManager.deactivate();
-    this.activeShaderManager.deactivate();
+  deactivateManagers() {
+    this._animationManager.deactivate();
+    this._controlManager.deactivate();
+    this._effectManager.deactivate();
+    this._frameManager.deactivate();
+    this._GUIManager.deactivate();
+    this._shaderManager.deactivate();
   }
 
-  private clearManagers() {
-    this.activeAnimationManager.clear();
-    this.activeControlManager.clear();
-    this.activeEffectManager.clear();
-    this.activeFrameManager.clear();
-    this.activeGUIManager.clear();
-    this.activeShaderManager.clear();
+  clearManagers() {
+    this._animationManager.clear();
+    this._controlManager.clear();
+    this._effectManager.clear();
+    this._frameManager.clear();
+    this._GUIManager.clear();
+    this._shaderManager.clear();
   }
 
   /**
@@ -210,9 +272,9 @@ export abstract class IIIDM {
    * - If you add object that has same name with other object, it will be replaced.
    * - Other objects will be added to scene.
    */
-  protected addObjectsToScene(isNeedRender: boolean, ...objects: Object3D<Object3DEventMap>[]) {
+  addObjectsToScene(isNeedRender: boolean, ...objects: Object3D<Object3DEventMap>[]) {
     objects.forEach(object => {
-      if (object.name === EMPTY_STRING) throw this.logWorker.error('Object name is empty.');
+      if (object.name === EMPTY_STRING) throw this._logWorker.error('Object name is empty.');
 
       const duplicatedObjectIndex = this._activeScene.children.findIndex(
         child => child.name === object.name
@@ -238,12 +300,12 @@ export abstract class IIIDM {
    * - If name is not exist, it will be throw error.
    * - When you remove object, it will be disposed including children object.
    */
-  protected removeObjectsFromScene(isNeedRender: boolean, ...names: string[]) {
+  removeObjectsFromScene(isNeedRender: boolean, ...names: string[]) {
     names.forEach(name => {
       const targetObject = this._activeScene.getObjectByName(name);
 
       if (!targetObject)
-        throw this.logWorker.error(`Object name with ${name} is not exist. can't remove it.`);
+        throw this._logWorker.error(`Object name with ${name} is not exist. can't remove it.`);
 
       targetObject.traverse(this.disposeObject);
 
@@ -259,16 +321,14 @@ export abstract class IIIDM {
    * - When you change active camera, exist active camera will be removed from scene. and new active camera will be added to scene.
    * - Automatically, render will be called.
    */
-  protected changeActiveCameraTo(name: string) {
-    const cameraIndex = this.registeredCameras.findIndex(camera => camera.name === name);
+  changeActiveCameraTo(name: string) {
+    const cameraIndex = this._registeredCameras.findIndex(camera => camera.name === name);
 
-    if (cameraIndex === -1) throw this.logWorker.error(`Camera name with ${name} is not exist.`);
+    if (cameraIndex === -1) throw this._logWorker.error(`Camera name with ${name} is not exist.`);
 
     this.removeObjectsFromScene(false, this._activeCamera.name);
 
-    this._activeCamera = this.registeredCameras[cameraIndex];
-
-    this.addObjectsToScene(true, this._activeCamera);
+    this._activeCamera = this._registeredCameras[cameraIndex];
   }
 
   /**
@@ -277,20 +337,20 @@ export abstract class IIIDM {
    * - When your new camera has same name with other camera, it will be replaced.
    * - If not, it will be added to registered cameras.
    */
-  protected registerCamera(camera: PerspectiveCamera) {
-    if (camera.name === EMPTY_STRING) throw this.logWorker.error('Camera name is required.');
+  registerCamera(camera: PerspectiveCamera) {
+    if (camera.name === EMPTY_STRING) throw this._logWorker.error('Camera name is required.');
 
-    const duplicatedCameraIndex = this.registeredCameras.findIndex(
+    const duplicatedCameraIndex = this._registeredCameras.findIndex(
       registeredCamera => registeredCamera.name === camera.name
     );
 
     if (duplicatedCameraIndex !== -1) {
-      this.registeredCameras[duplicatedCameraIndex] = camera;
+      this._registeredCameras[duplicatedCameraIndex] = camera;
 
       return;
     }
 
-    this.registeredCameras.push(camera);
+    this._registeredCameras.push(camera);
   }
 
   /**
@@ -298,12 +358,12 @@ export abstract class IIIDM {
    * - If name is not exist, it will be throw error.
    * - If you want to render after changing active scene, please set isNeedRender as true.
    */
-  protected changeActiveSceneTo(name: string, isNeedRender: boolean) {
-    const sceneIndex = this.registeredScenes.findIndex(scene => scene.name === name);
+  changeActiveSceneTo(name: string, isNeedRender: boolean) {
+    const sceneIndex = this._registeredScenes.findIndex(scene => scene.name === name);
 
-    if (sceneIndex === -1) throw this.logWorker.error(`Scene name with ${name} is not exist.`);
+    if (sceneIndex === -1) throw this._logWorker.error(`Scene name with ${name} is not exist.`);
 
-    this._activeScene = this.registeredScenes[sceneIndex];
+    this._activeScene = this._registeredScenes[sceneIndex];
 
     if (isNeedRender) this.render();
   }
@@ -314,63 +374,61 @@ export abstract class IIIDM {
    * - When your new scene has same name with other scene, it will be replaced.
    * - If not, it will be added to registered scenes.
    */
-  protected registerScene(scene: Scene) {
-    if (scene.name === EMPTY_STRING) throw this.logWorker.error('Scene name is required.');
+  registerScene(scene: Scene) {
+    if (scene.name === EMPTY_STRING) throw this._logWorker.error('Scene name is required.');
 
-    const duplicatedSceneIndex = this.registeredScenes.findIndex(
+    const duplicatedSceneIndex = this._registeredScenes.findIndex(
       registeredScene => registeredScene.name === scene.name
     );
 
     if (duplicatedSceneIndex !== -1) {
-      this.registeredScenes[duplicatedSceneIndex].traverse(this.disposeObject);
-      this.registeredScenes[duplicatedSceneIndex] = scene;
+      this._registeredScenes[duplicatedSceneIndex].traverse(this.disposeObject);
+      this._registeredScenes[duplicatedSceneIndex] = scene;
 
       return;
     }
 
-    this.registeredScenes.push(scene);
+    this._registeredScenes.push(scene);
   }
 
   /** NOTE: When IIIDM instance is used, must using this function to append canvas to target. */
   appendCanvasTo(target: HTMLElement) {
     target.appendChild(this.canvas);
 
-    this.isCanvasAppended = true;
+    this._isCanvasAppended = true;
     this.resize();
   }
 
   protected onResize() {
-    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
-
-    this._activeCamera.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
+    this._activeCamera.aspect = this._canvas.clientWidth / this._canvas.clientHeight;
     this._activeCamera.updateProjectionMatrix();
 
-    this.render();
+    this._renderer.setSize(this._canvas.clientWidth, this._canvas.clientHeight, false);
   }
 
   protected onRender() {
-    this.renderer.render(this._activeScene, this._activeCamera);
+    this._renderer.render(this._activeScene, this._activeCamera);
   }
 
   protected onActivate() {
-    if (this._isActive) throw this.logWorker.error('IIIDM instance is already activated.');
+    if (this._isActive) throw this._logWorker.error('IIIDM instance is already activated.');
 
-    if (!this.isCanvasAppended) throw this.logWorker.error('Canvas is not appended.');
+    if (!this._isCanvasAppended) throw this._logWorker.error('Canvas is not appended.');
 
-    if (this.isInitialized) this._isInitialized = false;
+    if (this._isInitialized) this._isInitialized = false;
 
     this._isActive = true;
 
     this._activeCore.changeIIIDM(this);
 
     if (this._isDevMode) {
-      this.activeGUIManager.initialize();
-      this.activeGUIManager.activate();
+      this._GUIManager.initialize();
+      this._GUIManager.activate();
     }
   }
 
   protected onDeactivate() {
-    if (!this._isActive) throw this.logWorker.error('IIIDM instance is not activated.');
+    if (!this._isActive) throw this._logWorker.error('IIIDM instance is not activated.');
 
     this._isActive = false;
 
@@ -380,16 +438,21 @@ export abstract class IIIDM {
   protected onDispose() {
     if (this._isActive) this._isActive = false;
 
-    this._activeScene.traverse(this.disposeObject);
-    this._activeScene.clear();
-    this._activeCamera.clear();
+    this._registeredScenes.map(scene => {
+      scene.traverse(this.disposeObject);
+      scene.clear();
+    });
+    this._registeredCameras.map(camera => {
+      camera.traverse(this.disposeObject);
+      camera.clear();
+    });
     this.clearManagers();
-    this.renderer.renderLists.dispose();
-    this.renderer.dispose();
-    this.renderer.clear();
+    this._renderer.renderLists.dispose();
+    this._renderer.dispose();
+    this._renderer.clear();
 
     if (!this.isInitialized) {
-      this.logWorker.info('IIIDM instance has some changes. and initialize all of them.');
+      this._logWorker.info('IIIDM instance has some changes. and initialize all of them.');
       this.initialize();
       this._isInitialized = true;
     }
@@ -397,13 +460,13 @@ export abstract class IIIDM {
 
   // NOTE: Essential methods for using IIIDM instance.
   /** NOTE: Using onResize before declare other things. */
-  protected abstract resize(): void;
+  abstract resize(): void;
   /** NOTE: Using onRender before declare other things. */
-  protected abstract render(): void;
+  abstract render(): void;
   /** NOTE: Using onActivate before declare other things. */
-  protected abstract activate(): void;
+  abstract activate(): void;
   /** NOTE: Using onDeactivate before declare other things. */
-  protected abstract deactivate(): void;
+  abstract deactivate(): void;
   /** NOTE: Using onDispose before declare other things. */
   abstract dispose(): void;
 }

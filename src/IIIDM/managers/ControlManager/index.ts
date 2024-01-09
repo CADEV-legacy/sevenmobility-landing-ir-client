@@ -3,44 +3,38 @@ import { OrbitControls } from 'three-stdlib';
 import { IIIDM } from '@/IIIDM';
 import { IIIDMManager } from '@/IIIDM/managers';
 export class ControlManager extends IIIDMManager {
-  private orbitControl: OrbitControls | null = null;
+  private _orbitControl: OrbitControls;
 
   constructor(maker: IIIDM) {
     super(maker);
 
-    this.orbitControl = new OrbitControls(this.maker.activeCamera, this.maker.canvas);
-    this.orbitControl.enabled = false;
+    this._orbitControl = new OrbitControls(this.maker.activeCamera, this.maker.canvas);
+    this._orbitControl.enabled = false;
+  }
+
+  get orbitControl() {
+    return this._orbitControl;
   }
 
   initialize() {
     this.onInitialize();
-
-    this.orbitControl = new OrbitControls(this.maker.activeCamera, this.maker.canvas);
-    this.orbitControl.enabled = false;
   }
 
   activate() {
     this.onActivate();
 
-    if (!this.orbitControl) throw this.logWorker.error('Not yet fully initialized.');
-
-    this.orbitControl.enabled = true;
+    this._orbitControl.enabled = true;
   }
 
   deactivate() {
     this.onDeactivate();
 
-    if (!this.orbitControl) throw this.logWorker.error('Not yet fully initialized.');
-
-    this.orbitControl.enabled = false;
+    this._orbitControl.enabled = false;
   }
 
   clear() {
     this.onClear();
 
-    if (!this.orbitControl) return;
-
-    this.orbitControl.dispose();
-    this.orbitControl = null;
+    this._orbitControl.dispose();
   }
 }

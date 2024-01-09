@@ -18,7 +18,10 @@ const DEFAULT_FRAME_PER_SECOND = FRAME_PER_SECOND[30];
 
 type FrameUpdateAction = () => void;
 
-type RenderFunction = () => void;
+type TaskedFrameUpdateAction = {
+  name: string;
+  action: FrameUpdateAction;
+};
 
 /**
  * NOTE: Change every scene in every frame.
@@ -28,8 +31,7 @@ export class FrameManager extends IIIDMManager {
   private delta: number = 0;
   private interval: number = 1 / DEFAULT_FRAME_PER_SECOND;
   private requestAnimationFrameId: number | null = null;
-  private taskedFrameUpdateAction: FrameUpdateAction[] = [];
-  private _renderFunction: RenderFunction | null = null;
+  private taskedFrameUpdateActions: TaskedFrameUpdateAction[] = [];
   private _clock: Clock = new Clock();
   private _fps: FramePerSecond = DEFAULT_FRAME_PER_SECOND;
 
@@ -54,30 +56,19 @@ export class FrameManager extends IIIDMManager {
     this.logWorker.info(`Change fps to ${fps}`);
   }
 
-  get renderFunction() {
-    if (!this._renderFunction)
-      throw this.logWorker.error('Before get renderFunction, please initialize FrameManager.');
-
-    return this._renderFunction;
-  }
-
-  set renderFunction(renderFunction: RenderFunction) {
-    this._renderFunction = renderFunction;
-  }
-
   get clock() {
     return this._clock;
   }
 
   /** NOTE: If already same function has added, other functions will be added. */
-  addFrameUpdateAction(...actions: FrameUpdateAction[]) {
+  addFrameUpdateAction(...actions: TaskedFrameUpdateAction[]) {
     actions.forEach(action => {
-      const sameFrameUpdateActionIndex = this.taskedFrameUpdateAction.findIndex(
-        taskedFrameUpdateAction => taskedFrameUpdateAction === action
+      const sameFrameUpdateActionIndex = this.taskedFrameUpdateActions.findIndex(
+        taskedFrameUpdateAction => taskedFrameUpdateAction.name === action.name
       );
 
       if (sameFrameUpdateActionIndex === -1) {
-        this.taskedFrameUpdateAction.push(action);
+        this.taskedFrameUpdateActions.push(action);
 
         return;
       }
@@ -85,24 +76,24 @@ export class FrameManager extends IIIDMManager {
   }
 
   /** NOTE: If parameter actions had set on taskedFrameUpdateAction, this function will be remove them. */
-  removeFrameUpdateAction(...actions: FrameUpdateAction[]) {
-    actions.forEach(action => {
-      const sameFrameUpdateActionIndex = this.taskedFrameUpdateAction.findIndex(
-        taskedFrameUpdateAction => taskedFrameUpdateAction === action
+  removeFrameUpdateAction(...actionNames: string[]) {
+    actionNames.forEach(actionName => {
+      const sameFrameUpdateActionIndex = this.taskedFrameUpdateActions.findIndex(
+        taskedFrameUpdateAction => taskedFrameUpdateAction.name === actionName
       );
 
       if (sameFrameUpdateActionIndex !== -1) {
-        this.taskedFrameUpdateAction.splice(sameFrameUpdateActionIndex, 1);
+        this.taskedFrameUpdateActions.splice(sameFrameUpdateActionIndex, 1);
 
         return;
       }
     });
   }
 
-  initialize(renderFunction: RenderFunction, fps?: FramePerSecond) {
+  initialize(fps?: FramePerSecond) {
     this.onInitialize();
 
-    this.renderFunction = renderFunction;
+    this.taskedFrameUpdateActions = [];
     this._fps = fps ?? DEFAULT_FRAME_PER_SECOND;
     this.interval = 1 / this._fps;
   }
@@ -123,7 +114,7 @@ export class FrameManager extends IIIDMManager {
     this._fps = DEFAULT_FRAME_PER_SECOND;
     this.delta = 0;
     this.interval = 1 / this._fps;
-    this.taskedFrameUpdateAction = [];
+    this.taskedFrameUpdateActions = [];
   }
 
   private clearAnimationFrame() {
@@ -144,7 +135,7 @@ export class FrameManager extends IIIDMManager {
       return;
     }
 
-    if (!this.taskedFrameUpdateAction.length) {
+    if (!this.taskedFrameUpdateActions.length) {
       this.logWorker.info('There is no tasked frameUpdateAction.');
 
       this.clearAnimationFrame();
@@ -158,9 +149,11 @@ export class FrameManager extends IIIDMManager {
 
     if (this.delta <= this.interval) return;
 
-    this.taskedFrameUpdateAction.forEach(frameUpdateAction => frameUpdateAction());
+    this.taskedFrameUpdateActions.forEach(taskedFrameUpdateAction =>
+      taskedFrameUpdateAction.action()
+    );
 
-    this.renderFunction!();
+    this.maker.render();
 
     this.logWorker.info(`[Tick] [FPS]:: ${this._fps}`);
 

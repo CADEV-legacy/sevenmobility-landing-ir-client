@@ -66,22 +66,22 @@ const Page: React.FC = () => {
   return (
     <S.Container>
       <S.CanvasWrapper ref={canvasWrapperRef} />
-      <S.LoadProgressOverlay isLoaded={isLoaded}>
+      {/* <S.LoadProgressOverlay isLoaded={isLoaded}>
         <S.LoadProgressText>
           Loading......
           <br />
           {loadProgress}%
         </S.LoadProgressText>
-      </S.LoadProgressOverlay>
+      </S.LoadProgressOverlay> */}
 
-      {isLoaded && (
+      {/* {isLoaded && (
         <S.Overlay isLoaded={isLoaded}>
           <S.Title opacityScore={opacityScore}>
             우리는 지속 가능한 미래 모빌리티를 만듭니다.
           </S.Title>
           <S.Title opacityScore={opacityScore}>새로움과 혁신을 담다, 세븐모빌리티</S.Title>
         </S.Overlay>
-      )}
+      )} */}
     </S.Container>
   );
 };

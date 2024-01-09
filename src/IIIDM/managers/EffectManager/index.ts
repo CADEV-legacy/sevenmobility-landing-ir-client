@@ -22,6 +22,8 @@ type BloomEffectType = 'all' | 'selective';
 
 type SelectedMaterial = Record<string, Material>;
 
+const DEFAULT_LAYDER_DEPTH = 1;
+
 const BLOOM_EFFECT_SHADER = {
   vertex: `
     varying vec2 vUv;
@@ -50,48 +52,61 @@ const BLOOM_EFFECT_SHADER = {
 
 /** TODO: Make manager class of all effects, not only bloomEffect. */
 export class EffectManager extends IIIDMManager {
-  private renderScene: RenderPass | null = null;
+  private renderScene: RenderPass;
   private mixPass: ShaderPass | null = null;
   private outputPass: OutputPass | null = null;
-  private bloomPass: UnrealBloomPass | null = null;
+  private bloomPass: UnrealBloomPass;
   private bloomLayer: Layers = new Layers();
+  private layerDepth: number = DEFAULT_LAYDER_DEPTH;
   private darkMaterial: MeshBasicMaterial = new MeshBasicMaterial({ color: new Color(0x000000) });
-  private _bloomEffectComposer: EffectComposer | null = null;
+  private _bloomEffectComposer: EffectComposer;
   private _finalEffectComposer: EffectComposer | null = null;
-  private _bloomEffectType: BloomEffectType = 'all';
-  private _selectedMaterial: SelectedMaterial = {};
+  private bloomEffectType: BloomEffectType = 'all';
+  private selectedMaterial: SelectedMaterial = {};
 
   constructor(maker: IIIDM) {
     super(maker);
+
+    this.bloomEffectType = 'all';
+    this.layerDepth = DEFAULT_LAYDER_DEPTH;
+    this.bloomLayer.set(this.layerDepth);
+
+    this._bloomEffectComposer = new EffectComposer(this.maker.renderer);
+
+    if (!this.maker.activeScene || !this.maker.activeCamera)
+      throw this.logWorker.error('Not found scene or camera.');
+
+    this.renderScene = new RenderPass(this.maker.activeScene, this.maker.activeCamera);
+    this.bloomPass = new UnrealBloomPass(
+      new Vector2(this.maker.canvas.width, this.maker.canvas.height),
+      1,
+      0.5,
+      0
+    );
+
+    // this._bloomEffectComposer.setPixelRatio(window.devicePixelRatio);
+    // this._bloomEffectComposer.setSize(
+    //   this.maker.canvas.clientWidth,
+    //   this.maker.canvas.clientHeight
+    // );
+    this._bloomEffectComposer.addPass(this.renderScene);
+    this._bloomEffectComposer.addPass(this.bloomPass);
+    this._bloomEffectComposer.renderToScreen = true;
   }
 
   get bloomEffectComposer() {
     return this._bloomEffectComposer;
   }
 
-  set bloomEffectComposer(value) {
-    this._bloomEffectComposer = value;
-  }
-
   get finalEffectComposer() {
     return this._finalEffectComposer;
-  }
-
-  set finalEffectComposer(value) {
-    this._finalEffectComposer = value;
-  }
-
-  get bloomEffectType() {
-    return this._bloomEffectType;
   }
 
   private changeMaterialToDark(object: Object3D<Object3DEventMap>) {
     if (!(object instanceof Mesh) || !object.isMesh) return;
 
     if (!this.bloomLayer.test(object.layers)) {
-      console.info('Darkended material');
-      console.info(object);
-      this._selectedMaterial[object.uuid] = object.material;
+      this.selectedMaterial[object.uuid] = object.material;
 
       object.material = this.darkMaterial;
     }
@@ -100,10 +115,10 @@ export class EffectManager extends IIIDMManager {
   private restoreMaterial(object: Object3D<Object3DEventMap>) {
     if (!(object instanceof Mesh) || !object.isMesh) return;
 
-    if (this._selectedMaterial[object.uuid]) {
-      object.material = this._selectedMaterial[object.uuid];
+    if (this.selectedMaterial[object.uuid]) {
+      object.material = this.selectedMaterial[object.uuid];
 
-      delete this._selectedMaterial[object.uuid];
+      delete this.selectedMaterial[object.uuid];
     }
   }
 
@@ -116,34 +131,30 @@ export class EffectManager extends IIIDMManager {
   ) {
     this.onInitialize();
 
-    this._bloomEffectType = bloomEffectType ?? 'all';
-    this.bloomLayer.set(layerDepth ?? 1000);
+    if (bloomEffectType) this.bloomEffectType = bloomEffectType;
+    if (layerDepth) {
+      this.layerDepth = layerDepth;
+    }
 
-    this.bloomEffectComposer = new EffectComposer(this.maker.renderer);
+    this.bloomLayer.set(this.layerDepth);
+    this.bloomPass.strength = strength;
+    this.bloomPass.radius = radius;
+    this.bloomPass.threshold = threshold;
 
-    if (!this.maker.activeScene || !this.maker.activeCamera)
-      throw this.logWorker.error('Not found scene or camera.');
-
-    this.renderScene = new RenderPass(this.maker.activeScene, this.maker.activeCamera);
-    this.bloomPass = new UnrealBloomPass(
-      new Vector2(this.maker.canvas.width, this.maker.canvas.height),
-      strength,
-      radius,
-      threshold
-    );
-
-    this.bloomEffectComposer.addPass(this.renderScene);
-    this.bloomEffectComposer.addPass(this.bloomPass);
-    this.bloomEffectComposer.renderToScreen = false;
-
-    if (this._bloomEffectType === 'selective') {
-      this.finalEffectComposer = new EffectComposer(this.maker.renderer);
+    if (this.bloomEffectType === 'selective') {
+      this._bloomEffectComposer.renderToScreen = false;
+      this._finalEffectComposer = new EffectComposer(this.maker.renderer);
+      // this._finalEffectComposer.setPixelRatio(window.devicePixelRatio);
+      // this._finalEffectComposer.setSize(
+      //   this.maker.canvas.width * devicePixelRatio,
+      //   this.maker.canvas.height * devicePixelRatio
+      // );
 
       this.mixPass = new ShaderPass(
         new ShaderMaterial({
           uniforms: {
             baseTexture: { value: null },
-            bloomTexture: { value: this.bloomEffectComposer.renderTarget2.texture },
+            bloomTexture: { value: this._bloomEffectComposer.renderTarget2.texture },
           },
           vertexShader: BLOOM_EFFECT_SHADER.vertex,
           fragmentShader: BLOOM_EFFECT_SHADER.fragment,
@@ -155,61 +166,44 @@ export class EffectManager extends IIIDMManager {
 
       this.outputPass = new OutputPass();
 
-      this.finalEffectComposer.addPass(this.renderScene);
-      this.finalEffectComposer.addPass(this.mixPass);
-      this.finalEffectComposer.addPass(this.outputPass);
+      this._finalEffectComposer.addPass(this.renderScene);
+      this._finalEffectComposer.addPass(this.mixPass);
+      this._finalEffectComposer.addPass(this.outputPass);
     }
   }
 
   activate() {
     this.onActivate();
-
-    if (this.bloomEffectType === 'all') {
-      if (!this.bloomEffectComposer) throw this.logWorker.error('There is no bloomEffectComposer.');
-
-      this.bloomEffectComposer.renderToScreen = true;
-    } else {
-      if (!this.finalEffectComposer) throw this.logWorker.error('There is no finalEffectComposer.');
-
-      this.finalEffectComposer!.renderToScreen = true;
-    }
   }
 
   deactivate() {
     this.onDeactivate();
-
-    if (this.bloomEffectType === 'all') {
-      if (!this.bloomEffectComposer) throw this.logWorker.error('There is no bloomEffectComposer.');
-
-      this.bloomEffectComposer!.renderToScreen = false;
-    } else {
-      if (!this.finalEffectComposer) throw this.logWorker.error('There is no finalEffectComposer.');
-
-      this.finalEffectComposer!.renderToScreen = false;
-    }
   }
 
   clear() {
     this.onClear();
 
-    if (this.bloomEffectComposer) {
-      this.bloomEffectComposer.dispose();
-      this.bloomEffectComposer = null;
+    if (this._bloomEffectComposer) {
+      this._bloomEffectComposer.dispose();
     }
 
-    if (this.finalEffectComposer) {
-      this.finalEffectComposer.dispose();
-      this.finalEffectComposer = null;
+    if (this._finalEffectComposer) {
+      this._finalEffectComposer.dispose();
+      this._finalEffectComposer = null;
     }
   }
 
   resize() {
-    if (!this.bloomEffectComposer) throw this.logWorker.error('Not found bloom effect composer.');
+    this._bloomEffectComposer.setSize(
+      this.maker.canvas.clientWidth,
+      this.maker.canvas.clientHeight
+    );
 
-    this.bloomEffectComposer.setSize(this.maker.canvas.width, this.maker.canvas.height);
-
-    if (this.finalEffectComposer) {
-      this.finalEffectComposer.setSize(this.maker.canvas.width, this.maker.canvas.height);
+    if (this._finalEffectComposer) {
+      this._finalEffectComposer.setSize(
+        this.maker.canvas.clientWidth,
+        this.maker.canvas.clientHeight
+      );
     }
   }
 
@@ -217,22 +211,21 @@ export class EffectManager extends IIIDMManager {
     if (!this.maker.activeScene || !this.maker.activeCamera)
       throw this.logWorker.error('Not found scene or camera.');
 
-    if (!this.bloomEffectComposer) throw this.logWorker.error('Not found bloom effect composer.');
+    if (!this._bloomEffectComposer) throw this.logWorker.error('Not found bloom effect composer.');
 
     if (this.bloomEffectType === 'all') {
-      this.bloomEffectComposer.render();
+      this._bloomEffectComposer.render();
     } else {
-      if (!this.finalEffectComposer) throw this.logWorker.error('Not found final effect composer.');
+      if (!this._finalEffectComposer)
+        throw this.logWorker.error('Not found final effect composer.');
 
       this.maker.activeScene.traverse(this.changeMaterialToDark.bind(this));
 
-      this.bloomEffectComposer.render();
+      this._bloomEffectComposer.render();
 
       this.maker.activeScene.traverse(this.restoreMaterial.bind(this));
 
-      this.finalEffectComposer.render();
+      this._finalEffectComposer.render();
     }
   }
 }
-
-export { SmokeEffect } from './SmokeEffect';
