@@ -54,8 +54,10 @@ const Page: React.FC = () => {
     const motorcycleIIIDM = motorcycleIIIDMRef.current;
 
     window.addEventListener('resize', motorcycleIIIDM.resize.bind(motorcycleIIIDM));
+    window.addEventListener('wheel', motorcycleIIIDM.scroll.bind(motorcycleIIIDM));
     return () => {
       window.removeEventListener('resize', motorcycleIIIDM.resize.bind(motorcycleIIIDM));
+      window.removeEventListener('wheel', motorcycleIIIDM.scroll.bind(motorcycleIIIDM));
 
       motorcycleIIIDM.dispose();
     };

@@ -18,12 +18,12 @@ const LOADING_SECTION_DATA = {
     color: new Color(0xffffff),
     intensity: 0.1,
     maxIntensity: 2,
-    position: new Vector3(-1, 1, 0),
+    position: new Vector3(-4, 1.5, 0),
     targetPosition: new Vector3(0, 1, 0),
   },
   motorcycle: {
     path: '/3ds/models/motorcycle.glb',
-    position: new Vector3(20, 0, 0),
+    position: new Vector3(1, 0, 0),
     headLight: {
       key: 'light',
       emissiveColor: new Color(0xffffff),
@@ -31,12 +31,9 @@ const LOADING_SECTION_DATA = {
       changedEmissiveIntensity: 0.8,
     },
     velocity: {
-      initialValue: 0.6,
-      minimumValue: 0.05,
-      acceleration: 0.01,
-      minimumAcceleration: 0.0001,
+      initialValue: 0.025,
+      acceleration: 0.0003125,
     },
-    closedPosition: 0,
   },
   bloomEffect: {
     layerDepth: 1,
@@ -90,17 +87,53 @@ const LOADING_SECTION_DATA = {
   },
 };
 
-const BATTERY_SECTINO_DATA = {};
+const INTRO_SECTION_DATA = {
+  objectName: {},
+  background: { color: new Color(0xffffff) },
+  camera: {
+    position: new Vector3(-1, 1, -4),
+    lookAt: new Vector3(-1, 1, 0),
+    changeCount: 100,
+  },
+};
 
-const BMS_SECTION_DATA = {};
+const BATTERY_SECTION_DATA = {
+  objectName: {},
+  background: {
+    color: new Color(0xffffff),
+  },
+  camera: {
+    position: new Vector3(-0.5, 1, -1.6),
+    lookAt: new Vector3(0.5, 0.2, 0),
+    changeCount: 200,
+  },
+};
 
-const MCU_SECTION_DATA = {};
+const BMS_SECTION_DATA = {
+  objectName: {},
+};
 
-const ELECTRIC_MOTOR_SECTION_DATA = {};
+const MCU_SECTION_DATA = {
+  objectName: {},
+};
+
+const ELECTRIC_MOTOR_SECTION_DATA = {
+  objectName: {},
+  camera: {
+    position: new Vector3(2.5, 1, -1.6),
+    lookAt: new Vector3(1.5, 0.5, 0),
+  },
+};
 
 const REGENERATIVE_BRAKING_SECTION_DATA = {};
 
-const USER_REVIEW_SECTION_DATA = {};
+const USER_REVIEW_SECTION_DATA = {
+  objectName: {},
+  camera: {
+    position: new Vector3(4.5, 1, -4.5),
+    lookAt: new Vector3(0.8, 0.5, 0),
+  },
+};
 
 const DETAIL_SECTION_DATA = {};
 
@@ -108,7 +141,8 @@ export type SectionType = keyof typeof SECTION_DATA;
 
 export const SECTION_DATA = {
   loading: LOADING_SECTION_DATA,
-  battery: BATTERY_SECTINO_DATA,
+  intro: INTRO_SECTION_DATA,
+  battery: BATTERY_SECTION_DATA,
   bms: BMS_SECTION_DATA,
   mcu: MCU_SECTION_DATA,
   electricMotor: ELECTRIC_MOTOR_SECTION_DATA,

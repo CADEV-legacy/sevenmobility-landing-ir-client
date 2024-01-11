@@ -22,13 +22,52 @@ import { OnLoadCompleteAction, OnLoadProgressAction } from '@/IIIDM/workers';
 
 type onHideTitleAction = (opacityScore: number) => void;
 
+type SectionCameraInfo = {
+  positionAdditionalVector: Vector3;
+  lookAtAdditionalVector: Vector3;
+};
+
 export class MotorcycleIIIDM extends IIIDM {
   private sectionType: SectionType;
-
   private motorcycleVelocity = SECTION_DATA.loading.motorcycle.velocity.initialValue;
   private titleOpacityScore = 1;
   private titleOpacityScoreSub = SECTION_DATA.loading.title.opacityScore.sub.initialValue;
   private _onHideTitleAction: onHideTitleAction | null = null;
+  private introSectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+  private batterySectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+  private bmsSectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+  private mcuSectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+  private electricMotorSectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+  private regenerativeBrakingSectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+  private userReviewSectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+  private detailSectionCameraInfo: SectionCameraInfo = {
+    positionAdditionalVector: new Vector3(),
+    lookAtAdditionalVector: new Vector3(),
+  };
+
+  // TODO: Remove this comment.
+  private cameraLookAt = new Vector3().copy(SECTION_DATA.loading.camera.lookAt);
 
   constructor(core: IIIDMCore) {
     super(core);
@@ -57,7 +96,7 @@ export class MotorcycleIIIDM extends IIIDM {
     this.controlManager.initialize();
 
     this.activeCamera.position.add(SECTION_DATA.loading.camera.position);
-    this.activeCamera.lookAt(SECTION_DATA.loading.camera.lookAt);
+    this.activeCamera.lookAt(this.cameraLookAt);
 
     this.activeCamera.updateProjectionMatrix();
 
@@ -75,13 +114,6 @@ export class MotorcycleIIIDM extends IIIDM {
 
   set onHideTitleAction(action: onHideTitleAction) {
     this._onHideTitleAction = action;
-  }
-
-  // TODO: Remove this function.
-  private updateControl() {
-    this.controlManager.orbitControl.update();
-
-    this.activeCamera.updateProjectionMatrix();
   }
 
   private async loadMotorcycle() {
@@ -166,47 +198,30 @@ export class MotorcycleIIIDM extends IIIDM {
 
   private closerMotorcycle() {
     return new Promise<void>(resolve => {
-      let currentMotorcyclePosition: number | null = null;
-      let currentDirectionalLightIntensity: number | null = null;
-
       const runMotorcycle = () => {
-        if (this.motorcycleVelocity >= SECTION_DATA.loading.motorcycle.velocity.minimumValue) {
+        this.activeScene.traverse(object => {
+          // NOTE: Change motorcycle position by velocity.
+          if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+            object.position.add(new Vector3(-this.motorcycleVelocity, 0, 0));
+          }
+
+          // NOTE: Change directional light intensity.
+          if (
+            object instanceof DirectionalLight &&
+            object.name === SECTION_DATA.loading.objectName.directionalLight
+          ) {
+            if (object.intensity <= SECTION_DATA.loading.directionalLight.maxIntensity)
+              object.intensity += 0.1;
+          }
+        });
+
+        // NOTE: Change motorcycle velocity.
+        if (this.motorcycleVelocity >= 0) {
           this.motorcycleVelocity -= SECTION_DATA.loading.motorcycle.velocity.acceleration;
         } else {
-          this.motorcycleVelocity -= SECTION_DATA.loading.motorcycle.velocity.minimumAcceleration;
-        }
-
-        if (
-          !currentDirectionalLightIntensity ||
-          currentDirectionalLightIntensity <= SECTION_DATA.loading.directionalLight.maxIntensity
-        ) {
-          this.activeScene.traverse(object => {
-            if (
-              object instanceof DirectionalLight &&
-              object.name === SECTION_DATA.loading.objectName.directionalLight
-            ) {
-              object.intensity += 0.08;
-
-              currentDirectionalLightIntensity = object.intensity;
-            }
-          });
-        }
-
-        if (
-          currentMotorcyclePosition &&
-          currentMotorcyclePosition <= SECTION_DATA.loading.motorcycle.closedPosition
-        ) {
           this.frameManager.removeFrameUpdateAction(runMotorcycle.name);
           return resolve();
         }
-
-        this.activeScene.traverse(object => {
-          if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
-            object.position.add(new Vector3(-this.motorcycleVelocity, 0, 0));
-
-            currentMotorcyclePosition = object.position.x;
-          }
-        });
       };
 
       this.frameManager.addFrameUpdateAction({
@@ -293,97 +308,158 @@ export class MotorcycleIIIDM extends IIIDM {
     this.renderer.autoClear = true;
   }
 
-  // private closerCamera() {
-  //   if (this.motorcycleVelocity >= 0) {
-  //     this.activeCamera.position.add(new Vector3(this.motorcycleVelocity, 0, 0));
-  //     this.motorcycleVelocity -= LOADING_SECTION_DATA.closerCamera.motorcycle.acceleration;
-  //     this.activeCamera.updateProjectionMatrix();
-  //   } else {
-  //     this.startTheEngine();
-  //     this.activeFrameManager.removeFrameUpdateAction('closerCamera');
-  //   }
-  // }
+  private getAdditionalVector(originalVector: Vector3, targetVector: Vector3, changeCount: number) {
+    return new Vector3(
+      (targetVector.x - originalVector.x) / changeCount,
+      (targetVector.y - originalVector.y) / changeCount,
+      (targetVector.z - originalVector.z) / changeCount
+    );
+  }
 
-  // private openSmokeEffect() {
-  //   this.smokeEffect.frameAction();
-  // }
+  // NOTE: Intro Section
+  private changePOVToIntroSection() {
+    let cameraPositionChangeCount = SECTION_DATA.intro.camera.changeCount;
 
-  // private titleHandleFrameAction() {
-  //   if (this.loadingSectionTitleOpacityScore <= 0.2) {
-  //     this.activeFrameManager.changeFrameUpdateAction([
-  //       { key: 'closerCamera', action: this.closerCamera.bind(this) },
-  //       { key: 'openSmokeEffect', action: this.openSmokeEffect.bind(this) },
-  //     ]);
+    const cameraPositionAdditionalVector = this.getAdditionalVector(
+      this.activeCamera.position,
+      SECTION_DATA.intro.camera.position,
+      SECTION_DATA.intro.camera.changeCount
+    );
+    const cameraLookAtAdditionalVector = this.getAdditionalVector(
+      this.cameraLookAt,
+      SECTION_DATA.intro.camera.lookAt,
+      SECTION_DATA.intro.camera.changeCount
+    );
 
-  //     const dirLight = this.activeScene.getObjectByName(
-  //       OBJECT_3D_NAME.loadingSectionDirectionalLight
-  //     ) as DirectionalLight;
+    const moveCameraOnIntroSection = () => {
+      if (cameraPositionChangeCount-- <= 0) {
+        this.frameManager.removeFrameUpdateAction(moveCameraOnIntroSection.name);
+        this.sectionType = 'intro';
 
-  //     if (dirLight.intensity <= 2) {
-  //       dirLight.intensity += 0.1;
-  //     }
-  //   }
+        const introSectionCameraPositionAdditionalVector = this.getAdditionalVector(
+          this.activeCamera.position,
+          SECTION_DATA.battery.camera.position,
+          SECTION_DATA.battery.camera.changeCount
+        );
+        const introSectionCameraLookAtAdditionalVector = this.getAdditionalVector(
+          this.cameraLookAt,
+          SECTION_DATA.battery.camera.lookAt,
+          SECTION_DATA.battery.camera.changeCount
+        );
 
-  //   if (this.loadingSectionTitleOpacityScore <= 0) {
-  //     this.activeFrameManager.removeFrameUpdateAction('titleHandleFrameAction');
-  //   }
+        this.introSectionCameraInfo.positionAdditionalVector =
+          introSectionCameraPositionAdditionalVector;
+        this.introSectionCameraInfo.lookAtAdditionalVector =
+          introSectionCameraLookAtAdditionalVector;
 
-  //   this.loadingSectionStartAction?.((this.loadingSectionTitleOpacityScore -= 0.018));
-  // }
+        return;
+      }
 
-  // private startTheEngine() {
-  //   setTimeout(() => {
-  //     this.changeHeadLightIntensity(
-  //       LOADING_SECTION_DATA.startTheEngine.motorcycle.headLight.emissiveIntensity
-  //     );
+      this.activeCamera.position.add(cameraPositionAdditionalVector);
 
-  //     this.motorcycleModel?.scene.traverse(object => {
-  //       if (
-  //         object instanceof Mesh &&
-  //         object.isMesh &&
-  //         object.name === LOADING_SECTION_DATA.loadMotorcycle.motorcycle.headLight.key &&
-  //         object.material instanceof MeshStandardMaterial &&
-  //         object.material.isMaterial
-  //       ) {
-  //         console.info('Layer on');
-  //         console.info(object);
-  //         object.layers.enable(BLOOM_LAYER_DEPTH);
-  //       }
-  //     });
+      this.cameraLookAt.add(cameraLookAtAdditionalVector);
 
-  //     this.render();
+      this.activeCamera.lookAt(this.cameraLookAt);
 
-  //     // this.removeObject3DMap(OBJECT_3D_MAP_KEY.smokeMesh);
-  //     // this.activeFrameManager.removeFrameUpdateAction('openSmokeEffect');
-  //     // this.activeFrameManager.changeFrameUpdateAction({
-  //     //   key: 'moveCameraToSide',
-  //     //   action: this.moveCameraToSide.bind(this),
-  //     // });
-  //     const premGenerator = new PMREMGenerator(this.renderer);
-  //     premGenerator.fromScene(this.activeScene, 0.04);
-  //   }, 500);
-  // }
+      this.activeCamera.updateProjectionMatrix();
+    };
 
-  // private moveCameraToSide() {
-  //   if (!this.loadingCameraRotationCircleRadius || !this.loadingCameraRotationCicleYPosition) {
-  //     this.loadingCameraRotationCircleRadius = Math.sqrt(
-  //       Math.pow(this.activeCamera.position.x, 2) + Math.pow(this.activeCamera.position.z, 2)
-  //     );
-  //     this.loadingCameraRotationCicleYPosition = this.activeCamera.position.y;
-  //   }
+    this.frameManager.addFrameUpdateAction({
+      name: moveCameraOnIntroSection.name,
+      action: moveCameraOnIntroSection.bind(this),
+    });
+    this.frameManager.activate();
+  }
 
-  //   const newZPosition = (this.activeCamera.position.z += 0.01);
-  //   const newXPosition = Math.sqrt(
-  //     Math.pow(this.loadingCameraRotationCircleRadius, 2) - Math.pow(newZPosition, 2)
-  //   );
+  private changePOVOnIntroSection(wheelEvent: WheelEvent) {
+    console.info(this.activeCamera.position);
+    if (wheelEvent.deltaY > 0) {
+      if (this.activeCamera.position.x >= SECTION_DATA.battery.camera.position.x) {
+        this.sectionType = 'battery';
 
-  //   this.activeCamera.position.set(
-  //     -newXPosition,
-  //     this.loadingCameraRotationCicleYPosition,
-  //     newZPosition
-  //   );
-  //   this.activeCamera.updateProjectionMatrix();
-  // }
+        return;
+      }
+
+      this.activeCamera.position.add(this.introSectionCameraInfo.positionAdditionalVector);
+
+      this.cameraLookAt.add(this.introSectionCameraInfo.lookAtAdditionalVector);
+
+      this.activeCamera.lookAt(this.cameraLookAt);
+    } else {
+      if (this.activeCamera.position.x <= SECTION_DATA.intro.camera.position.x) {
+        this.logWorker.warn('Intro section is the first section.');
+
+        return;
+      }
+
+      this.activeCamera.position.sub(this.introSectionCameraInfo.positionAdditionalVector);
+
+      this.cameraLookAt.sub(this.introSectionCameraInfo.lookAtAdditionalVector);
+
+      this.activeCamera.lookAt(this.cameraLookAt);
+    }
+
+    this.activeCamera.updateProjectionMatrix();
+    this.render();
+  }
+
+  // NOTE: Battery Section
+  private changePOVOnBatterySection(wheelEvent: WheelEvent) {
+    this.sectionType = 'battery';
+
+    this.activeScene.background = SECTION_DATA.battery.background.color;
+
+    this.activeCamera.position.set(
+      SECTION_DATA.battery.camera.position.x,
+      SECTION_DATA.battery.camera.position.y,
+      SECTION_DATA.battery.camera.position.z
+    );
+    this.activeCamera.lookAt(SECTION_DATA.battery.camera.lookAt);
+
+    this.activeCamera.updateProjectionMatrix();
+
+    this.render();
+  }
+
+  // NOTE: MCU Section
+
+  // NOTE: Electric Motor Section
+  private changePOVOnElectricMotorSection(wheelEvent: WheelEvent) {
+    this.sectionType = 'electricMotor';
+
+    // TODO: Remove this comment.
+    this.activeScene.background = SECTION_DATA.battery.background.color;
+
+    this.activeCamera.position.set(
+      SECTION_DATA.electricMotor.camera.position.x,
+      SECTION_DATA.electricMotor.camera.position.y,
+      SECTION_DATA.electricMotor.camera.position.z
+    );
+    this.activeCamera.lookAt(SECTION_DATA.electricMotor.camera.lookAt);
+
+    this.activeCamera.updateProjectionMatrix();
+
+    this.render();
+  }
+
+  // NOTE: User Review Section
+  private changePOVOnUserReviewSection(wheelEvent: WheelEvent) {
+    this.sectionType = 'userReview';
+
+    // TODO: Remove this comment.
+    this.activeScene.background = SECTION_DATA.battery.background.color;
+
+    this.activeCamera.position.set(
+      SECTION_DATA.userReview.camera.position.x,
+      SECTION_DATA.userReview.camera.position.y,
+      SECTION_DATA.userReview.camera.position.z
+    );
+    this.activeCamera.lookAt(SECTION_DATA.userReview.camera.lookAt);
+
+    this.activeCamera.updateProjectionMatrix();
+
+    this.render();
+  }
 
   resize() {
     this.onResize();
@@ -395,11 +471,84 @@ export class MotorcycleIIIDM extends IIIDM {
     this.onRender();
   }
 
+  scroll(wheelEvent: WheelEvent) {
+    switch (this.sectionType) {
+      case 'loading':
+        this.logWorker.warn('Scroll event is not available in loading section.');
+        return;
+      case 'intro':
+        this.changePOVOnIntroSection(wheelEvent);
+        break;
+      case 'battery':
+        this.changePOVOnBatterySection(wheelEvent);
+        break;
+      case 'bms':
+        break;
+      case 'mcu':
+        break;
+      case 'electricMotor':
+        this.changePOVOnElectricMotorSection(wheelEvent);
+        break;
+      case 'regenerativeBraking':
+        break;
+      case 'userReview':
+        this.changePOVOnUserReviewSection(wheelEvent);
+        break;
+      case 'detail':
+        break;
+      default:
+        this.logWorker.warn('Scroll event is not available in loading section.');
+        break;
+    }
+  }
+
+  /**
+   * NOTE: For manage POV.
+   * TODO: Remove this after set POV.
+   */
+  private updateControl() {
+    this.controlManager.orbitControl.target = this.cameraLookAt;
+    this.controlManager.orbitControl.update();
+    this.activeCamera.lookAt(this.cameraLookAt);
+
+    this.activeCamera.updateProjectionMatrix();
+  }
+  /**
+   * NOTE: For manage POV.
+   * TODO: Remove this after set POV.
+   */
+  private setPOVHelper() {
+    const povPositionFolder = this.GUIManager.gui.addFolder('POV position');
+
+    povPositionFolder.add(this.activeCamera.position, 'x', -10, 10, 0.01);
+    povPositionFolder.add(this.activeCamera.position, 'y', -10, 10, 0.01);
+    povPositionFolder.add(this.activeCamera.position, 'z', -10, 10, 0.01);
+
+    const povLookAtFolder = this.GUIManager.gui.addFolder('POV lookAt');
+
+    povLookAtFolder.add(this.cameraLookAt, 'x', -10, 10, 0.01);
+    povLookAtFolder.add(this.cameraLookAt, 'y', -10, 10, 0.01);
+    povLookAtFolder.add(this.cameraLookAt, 'z', -10, 10, 0.01);
+
+    this.GUIManager.gui.open();
+
+    this.controlManager.orbitControl.target = this.cameraLookAt;
+    this.controlManager.orbitControl.update();
+    this.controlManager.activate();
+
+    this.frameManager.addFrameUpdateAction({
+      name: this.updateControl.name,
+      action: this.updateControl.bind(this),
+    });
+    this.frameManager.activate();
+  }
+
   async activate() {
     this.onActivate();
 
     await this.loadMotorcycle();
 
+    // NOTE: Loading Section
     await this.hideTitle();
 
     this.showMotorcycle();
@@ -408,16 +557,9 @@ export class MotorcycleIIIDM extends IIIDM {
 
     this.startTheEngine();
 
-    // TODO: Remove this comment.
-    this.controlManager.orbitControl.target = SECTION_DATA.loading.camera.lookAt;
-    this.controlManager.orbitControl.update();
-    this.controlManager.activate();
-
-    this.frameManager.addFrameUpdateAction({
-      name: this.updateControl.name,
-      action: this.updateControl.bind(this),
-    });
-    // this.frameManager.activate();
+    setTimeout(() => {
+      this.changePOVToIntroSection();
+    }, 800);
   }
 
   deactivate() {
