@@ -22,7 +22,7 @@ const LOADING_SECTION_DATA = {
     targetPosition: new Vector3(0, 1, 0),
   },
   motorcycle: {
-    path: '/3ds/models/motorcycle.glb',
+    paths: ['/3ds/models/motorcycle.glb', '/3ds/models/battery.glb', '/3ds/models/mcu.glb'],
     position: new Vector3(1, 0, 0),
     headLight: {
       key: 'light',
@@ -74,7 +74,7 @@ const LOADING_SECTION_DATA = {
     },
   },
   groundMirror: {
-    color: new Color(0x151515),
+    color: new Color(0xffffff),
     name: 'groundMirror',
   },
   title: {
@@ -88,22 +88,24 @@ const LOADING_SECTION_DATA = {
 };
 
 const INTRO_SECTION_DATA = {
-  objectName: {},
-  background: { color: new Color(0xffffff) },
+  objectName: {
+    spotLight: 'spotLight',
+  },
   camera: {
-    position: new Vector3(-1, 1, -4),
-    lookAt: new Vector3(-1, 1, 0),
+    position: new Vector3(-1.5, 1, -5),
+    lookAt: new Vector3(-1.5, 1, 0),
     changeCount: 100,
+  },
+  spotLight: {
+    color: new Color(0xffffff),
+    position: new Vector3(0, 5, 0),
   },
 };
 
 const BATTERY_SECTION_DATA = {
   objectName: {},
-  background: {
-    color: new Color(0xffffff),
-  },
   camera: {
-    position: new Vector3(-0.5, 1, -1.6),
+    position: new Vector3(-0.6, 1, -2),
     lookAt: new Vector3(0.5, 0.2, 0),
     changeCount: 200,
   },
@@ -111,31 +113,57 @@ const BATTERY_SECTION_DATA = {
 
 const BMS_SECTION_DATA = {
   objectName: {},
+  camera: {
+    position: new Vector3(-2, 0.8, -0.8),
+    lookAt: new Vector3(0, 0.4, -0.4),
+    changeCount: 200,
+  },
 };
 
 const MCU_SECTION_DATA = {
   objectName: {},
+  camera: {
+    position: new Vector3(-1, 0.4, -0.8),
+    lookAt: new Vector3(0, 0, 0),
+    changeCount: 200,
+  },
 };
 
 const ELECTRIC_MOTOR_SECTION_DATA = {
   objectName: {},
   camera: {
-    position: new Vector3(2.5, 1, -1.6),
-    lookAt: new Vector3(1.5, 0.5, 0),
+    position: new Vector3(3, 0.75, -2.25),
+    lookAt: new Vector3(2, 0.5, 0),
+    changeCount: 200,
   },
 };
 
-const REGENERATIVE_BRAKING_SECTION_DATA = {};
+const REGENERATIVE_BRAKING_SECTION_DATA = {
+  objectName: {},
+  camera: {
+    position: new Vector3(1.5, 1, -3),
+    lookAt: new Vector3(1.5, 0.6, 0),
+    changeCount: 200,
+  },
+};
 
 const USER_REVIEW_SECTION_DATA = {
   objectName: {},
   camera: {
-    position: new Vector3(4.5, 1, -4.5),
-    lookAt: new Vector3(0.8, 0.5, 0),
+    position: new Vector3(4, 1.5, -3),
+    lookAt: new Vector3(1, 1, 0),
+    changeCount: 200,
   },
 };
 
-const DETAIL_SECTION_DATA = {};
+const DETAIL_SECTION_DATA = {
+  objectName: {},
+  camera: {
+    position: new Vector3(-4, 1.5, 1),
+    lookAt: new Vector3(0, 1, 0),
+    changeCount: 200,
+  },
+};
 
 export type SectionType = keyof typeof SECTION_DATA;
 
