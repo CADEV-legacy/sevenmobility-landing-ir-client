@@ -1,1 +1,3 @@
-export { default as Provider } from './Provider';
+export * from './Provider';
+export * from './SWImage';
+export * from './Speedometer';

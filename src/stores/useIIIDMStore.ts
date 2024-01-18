@@ -1,20 +1,32 @@
 import { create } from 'zustand';
 
-import { MotorcycleIIIDM } from '@/3ds';
+import { MotorcycleIIIDM, SECTION_TYPES, SectionType } from '@/3ds';
 import { IIIDMCore } from '@/IIIDM/IIIDMCore';
-import { CLIENT_SETTINGS } from '@/settings';
+import { SETTINGS } from '@/settings';
 
 type IIIDMStoreProps = {
   core: IIIDMCore | null;
   motorcycleIIIDM?: MotorcycleIIIDM;
+  sectionType: SectionType;
+  sectionProgress: number;
 } & IIIDMStoreActions;
 
 interface IIIDMStoreActions {
   getMotorcycleIIIDM(): MotorcycleIIIDM | null;
+  setSectionType: (newSectionType: SectionType) => void;
+  setSectionProgress: (newSectionProgress: number) => void;
 }
 
+const DEFAULT_STORE = {
+  core: null,
+  motorcycleIIIDM: undefined,
+  sectionType: SECTION_TYPES[0],
+  sectionProgress: 0,
+};
+
 export const useIIIDMStore = create<IIIDMStoreProps>((set, get) => ({
-  core: typeof window !== 'undefined' ? new IIIDMCore(CLIENT_SETTINGS.isDevMode) : null,
+  ...DEFAULT_STORE,
+  core: typeof window !== 'undefined' ? new IIIDMCore(SETTINGS.isDevMode) : null,
   getMotorcycleIIIDM: () => {
     const { core, motorcycleIIIDM } = get();
 
@@ -27,5 +39,19 @@ export const useIIIDMStore = create<IIIDMStoreProps>((set, get) => ({
     set({ motorcycleIIIDM: newMotorcycleIIIDM });
 
     return newMotorcycleIIIDM;
+  },
+  setSectionType: newSectionType => {
+    const { sectionType } = get();
+
+    if (sectionType === newSectionType) return;
+
+    set({ sectionType: newSectionType });
+  },
+  setSectionProgress: newSectionProgress => {
+    const { sectionProgress } = get();
+
+    if (sectionProgress === newSectionProgress) return;
+
+    set({ sectionProgress: newSectionProgress });
   },
 }));

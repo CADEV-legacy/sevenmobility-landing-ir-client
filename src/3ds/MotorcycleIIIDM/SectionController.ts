@@ -1,18 +1,7 @@
 import { Vector3 } from 'three';
 
-import { SectionType, SECTION_DATA } from './resources';
-
-const SECTION_TYPES: SectionType[] = [
-  'loading',
-  'intro',
-  'battery',
-  'bms',
-  'mcu',
-  'electricMotor',
-  'regenerativeBraking',
-  'userReview',
-  'detail',
-];
+import { SECTION_TYPES, SectionType } from '.';
+import { SECTION_DATA } from './resources';
 
 type PrevSectinoType = Exclude<SectionType, 'userReview' | 'detail'>;
 

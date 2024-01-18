@@ -6,7 +6,7 @@ import { MotorcycleIIIDM } from '@/3ds';
 import { useIIIDMStore } from '@/stores';
 
 const Page: React.FC = () => {
-  const { getMotorcycleIIIDM } = useIIIDMStore();
+  const { getMotorcycleIIIDM, setSectionType, setSectionProgress } = useIIIDMStore();
   const motorcycleIIIDMRef = useRef<MotorcycleIIIDM | null>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -31,6 +31,12 @@ const Page: React.FC = () => {
       };
       newMotorcycleIIIDM.onHideTitleAction = opacityScore => {
         setOpacityScore(opacityScore);
+      };
+      newMotorcycleIIIDM.setSectionTypeAction = sectionType => {
+        setSectionType(sectionType);
+      };
+      newMotorcycleIIIDM.setSectionProgressAction = sectionProgress => {
+        setSectionProgress(sectionProgress);
       };
       newMotorcycleIIIDM.activate();
       motorcycleIIIDMRef.current = newMotorcycleIIIDM;
@@ -66,7 +72,7 @@ const Page: React.FC = () => {
   return (
     <S.Container>
       <S.CanvasWrapper ref={canvasWrapperRef} />
-      {/* <S.LoadProgressOverlay isLoaded={isLoaded}>
+      <S.LoadProgressOverlay isLoaded={isLoaded}>
         <S.LoadProgressText>
           Loading......
           <br />
@@ -80,7 +86,7 @@ const Page: React.FC = () => {
           </S.Title>
           <S.Title opacityScore={opacityScore}>새로움과 혁신을 담다, 세븐모빌리티</S.Title>
         </S.Overlay>
-      )} */}
+      )}
     </S.Container>
   );
 };

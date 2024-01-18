@@ -7,7 +7,7 @@ type ProviderProps = {
   children: React.ReactNode;
 };
 
-const Provider: React.FC<ProviderProps> = ({ children }) => {
+export const Provider: React.FC<ProviderProps> = ({ children }) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -15,5 +15,3 @@ const Provider: React.FC<ProviderProps> = ({ children }) => {
     </ThemeProvider>
   );
 };
-
-export default Provider;

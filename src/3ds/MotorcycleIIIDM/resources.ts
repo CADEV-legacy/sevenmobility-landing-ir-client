@@ -165,8 +165,6 @@ const DETAIL_SECTION_DATA = {
   },
 };
 
-export type SectionType = keyof typeof SECTION_DATA;
-
 export const SECTION_DATA = {
   loading: LOADING_SECTION_DATA,
   intro: INTRO_SECTION_DATA,
@@ -177,4 +175,4 @@ export const SECTION_DATA = {
   regenerativeBraking: REGENERATIVE_BRAKING_SECTION_DATA,
   userReview: USER_REVIEW_SECTION_DATA,
   detail: DETAIL_SECTION_DATA,
-};
+} as const;

@@ -24,16 +24,37 @@ import { SectionController } from './SectionController';
 import { IIIDM, IIIDMCore } from '@/IIIDM';
 import { OnLoadCompleteAction, OnLoadProgressAction } from '@/IIIDM/workers';
 
-type onHideTitleAction = (opacityScore: number) => void;
+type OnHideTitleAction = (opacityScore: number) => void;
+
+type SetSectionTypeAction = (sectionType: SectionType) => void;
+
+type SetSectionProgressAction = (sectionProgress: number) => void;
+
+export type SectionType = keyof typeof SECTION_DATA;
+
+export const SECTION_TYPES: SectionType[] = [
+  'loading',
+  'intro',
+  'battery',
+  'bms',
+  'mcu',
+  'electricMotor',
+  'regenerativeBraking',
+  'userReview',
+  'detail',
+];
 
 export class MotorcycleIIIDM extends IIIDM {
   private motorcycleVelocity = SECTION_DATA.loading.motorcycle.velocity.initialValue;
   private titleOpacityScore = 1;
   private titleOpacityScoreSub = SECTION_DATA.loading.title.opacityScore.sub.initialValue;
-  private _onHideTitleAction: onHideTitleAction | null = null;
   private activeCameraLookAt = new Vector3().copy(SECTION_DATA.loading.camera.lookAt);
   private sectionController: SectionController;
   private isWireframeMode = false;
+
+  private _onHideTitleAction: OnHideTitleAction | null = null;
+  private _setSectionTypeAction: SetSectionTypeAction | null = null;
+  private _setSectionProgressAction: SetSectionProgressAction | null = null;
 
   /**
    * NOTE: At constructing
@@ -91,8 +112,16 @@ export class MotorcycleIIIDM extends IIIDM {
     this.resourceWorker.onLoadCompleteAction = action;
   }
 
-  set onHideTitleAction(action: onHideTitleAction) {
+  set onHideTitleAction(action: OnHideTitleAction) {
     this._onHideTitleAction = action;
+  }
+
+  set setSectionTypeAction(action: SetSectionTypeAction) {
+    this._setSectionTypeAction = action;
+  }
+
+  set setSectionProgressAction(action: SetSectionProgressAction) {
+    this._setSectionProgressAction = action;
   }
 
   private async loadMotorcycle() {
@@ -295,10 +324,18 @@ export class MotorcycleIIIDM extends IIIDM {
     const sectionTypeInfo = this.sectionController.getSectionTypeInfo();
     const sectionCameraInfoMap = this.sectionController.sectionCameraInfoMap;
     const sectionExecutorInfoMap = this.sectionController.sectionExecutorInfoMap;
+
     if (sectionTypeInfo.active === 'loading' || !sectionTypeInfo.prev) {
       this.logWorker.warn('Scroll event is not available in prev section.');
       return;
     }
+
+    if (!this._setSectionTypeAction)
+      throw this.logWorker.error('setSectionTypeAction is must set.');
+
+    if (!this._setSectionProgressAction)
+      throw this.logWorker.error('setSectionProgressAction is must set.');
+
     const aForthTotalCameraXPosition = Math.abs(
       sectionTypeInfo.next
         ? (SECTION_DATA[sectionTypeInfo.next].camera.position.x -
@@ -316,12 +353,6 @@ export class MotorcycleIIIDM extends IIIDM {
     const targetCameraInfoMap =
       sectionCameraInfoMap[sectionTypeInfo.active] ?? sectionCameraInfoMap[sectionTypeInfo.prev];
 
-    const percentageOfSection = leftCameraXPosition / (aForthTotalCameraXPosition * 4);
-
-    console.info(
-      `[Type] :: ${sectionTypeInfo.active} [Percentage] :: ${percentageOfSection * 100}%`
-    );
-
     if (leftCameraXPosition >= aForthTotalCameraXPosition * 3) {
       sectionExecutorInfoMap[sectionTypeInfo.next ?? sectionTypeInfo.active]?.show();
     } else if (leftCameraXPosition < aForthTotalCameraXPosition * 3 && leftCameraXPosition >= 0) {
@@ -335,6 +366,10 @@ export class MotorcycleIIIDM extends IIIDM {
       this.activeCameraLookAt.sub(targetCameraInfoMap.lookAtAdditionalVector);
       this.activeCamera.lookAt(this.activeCameraLookAt);
       this.activeCamera.updateProjectionMatrix();
+
+      this._setSectionProgressAction(
+        Math.round((leftCameraXPosition / (aForthTotalCameraXPosition * 4)) * 100)
+      );
     } else {
       this.activeCamera.position.set(
         SECTION_DATA[sectionTypeInfo.active].camera.position.x,
@@ -349,6 +384,9 @@ export class MotorcycleIIIDM extends IIIDM {
       this.activeCamera.lookAt(this.activeCameraLookAt);
       this.activeCamera.updateProjectionMatrix();
       this.sectionController.prev();
+
+      this._setSectionTypeAction(sectionTypeInfo.prev);
+      this._setSectionProgressAction(100);
     }
   }
 
@@ -363,6 +401,12 @@ export class MotorcycleIIIDM extends IIIDM {
       return;
     }
 
+    if (!this._setSectionProgressAction)
+      throw this.logWorker.error('setSectionProgressAction is must set.');
+
+    if (!this._setSectionTypeAction)
+      throw this.logWorker.error('setSectionTypeAction is must set.');
+
     const aForthTotalCameraXPosition = Math.abs(
       (SECTION_DATA[sectionTypeInfo.next].camera.position.x -
         SECTION_DATA[sectionTypeInfo.active].camera.position.x) /
@@ -371,13 +415,6 @@ export class MotorcycleIIIDM extends IIIDM {
 
     const leftCameraXPosition = Math.abs(
       SECTION_DATA[sectionTypeInfo.next].camera.position.x - this.activeCamera.position.x
-    );
-
-    const percentageOfSection =
-      (aForthTotalCameraXPosition * 4 - leftCameraXPosition) / (aForthTotalCameraXPosition * 4);
-
-    console.info(
-      `[Type] :: ${sectionTypeInfo.active} [Percentage] :: ${percentageOfSection * 100}%`
     );
 
     // NOTE: Execute active section function.
@@ -404,6 +441,14 @@ export class MotorcycleIIIDM extends IIIDM {
       );
       this.activeCamera.lookAt(this.activeCameraLookAt);
       this.activeCamera.updateProjectionMatrix();
+
+      this._setSectionProgressAction(
+        Math.round(
+          ((aForthTotalCameraXPosition * 4 - leftCameraXPosition) /
+            (aForthTotalCameraXPosition * 4)) *
+            100
+        )
+      );
     } else {
       this.activeCamera.position.set(
         SECTION_DATA[sectionTypeInfo.next].camera.position.x,
@@ -418,6 +463,9 @@ export class MotorcycleIIIDM extends IIIDM {
       this.activeCamera.lookAt(this.activeCameraLookAt);
       this.activeCamera.updateProjectionMatrix();
       this.sectionController.next();
+
+      this._setSectionTypeAction(sectionTypeInfo.next);
+      this._setSectionProgressAction(0);
     }
   }
 
@@ -426,7 +474,7 @@ export class MotorcycleIIIDM extends IIIDM {
   }
 
   private turnOnTheLight() {
-    this.activeScene.background = null;
+    // this.activeScene.background = null;
 
     const directionalLightA = new DirectionalLight(0xffffff, 1.5);
     directionalLightA.position.set(5, 5, 5);
@@ -502,8 +550,6 @@ export class MotorcycleIIIDM extends IIIDM {
 
   scroll(wheelEvent: WheelEvent) {
     const activeSectionType = this.sectionController.getSectionTypeInfo().active;
-
-    console.info(activeSectionType);
 
     if (activeSectionType === 'loading') {
       this.logWorker.warn('Scroll event is not available in loading section.');
@@ -609,10 +655,35 @@ export class MotorcycleIIIDM extends IIIDM {
     });
   }
 
-  private showBattery() {
-    const batteryModel = this.activeScene.getObjectByName('batteryModel');
+  visibleMotorcycle() {}
 
-    this.removeObjectsFromScene(false, SECTION_DATA.loading.objectName.motorcycle);
+  invisibleMotorcycle() {
+    const motorcycleModel = this.activeScene.getObjectByName(
+      SECTION_DATA.loading.objectName.motorcycle
+    );
+
+    if (motorcycleModel) {
+      motorcycleModel.traverse(object => {
+        if (
+          object instanceof Mesh &&
+          object.isMesh &&
+          (object.material instanceof MeshStandardMaterial ||
+            object.material instanceof MeshPhysicalMaterial)
+        ) {
+          if (!object.material.transparent) object.material.transparent = true;
+
+          if (object.material.opacity >= 0) {
+            object.material.opacity -= 0.01;
+          } else {
+            object.material.opacity = 0;
+          }
+        }
+      });
+    }
+  }
+
+  private focusToBattery() {
+    const batteryModel = this.activeScene.getObjectByName('batteryModel');
 
     if (batteryModel) {
       const oneBatteryModel = batteryModel.children[0];
@@ -671,3 +742,6 @@ export class MotorcycleIIIDM extends IIIDM {
     this.onDispose();
   }
 }
+
+export * from './resources';
+export * from './SectionController';
