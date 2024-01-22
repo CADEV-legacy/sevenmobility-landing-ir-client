@@ -42,7 +42,6 @@ const Page: React.FC = () => {
         newMotorcycleIIIDM.appendCanvasTo(canvasWrapperRef.current);
         newMotorcycleIIIDM.onLoadProgressAction = progress => {
           setLoadProgress(progress);
-          console.info('Page progress:', progress);
         };
         newMotorcycleIIIDM.onLoadCompleteAction = () => {
           setIsLoaded(true);

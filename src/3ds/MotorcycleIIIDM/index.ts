@@ -650,9 +650,6 @@ export class MotorcycleIIIDM extends IIIDM {
       getAdditionalVector,
       changeActiveControlledSection,
     } = this.sectionController;
-    console.info('changePOVToTargetSection is executed');
-    console.info('Target section is ', targetSection);
-    console.info('Active section is ', activeControlledSection);
     // NOTE: If target section is active section, return.
     if (targetSection === activeControlledSection) return;
 
@@ -660,10 +657,6 @@ export class MotorcycleIIIDM extends IIIDM {
       throw this.logWorker.error(
         'Change POV to target section can not executed on loading section.'
       );
-
-    console.info('또 실행됌!');
-    this.frameManager.removeFrameUpdateAction(this.moveCameraPOVToNext.name);
-    console.info(this.frameManager);
 
     // NOTE: Calculate additional vector for camera position and lookAt.
     const targetSectionCameraPositionAdditionalVector = getAdditionalVector(
@@ -781,6 +774,7 @@ export class MotorcycleIIIDM extends IIIDM {
         return;
       }
     };
+    this.frameManager.removeFrameUpdateAction(moveCameraToTargetSection.name);
 
     this.frameManager.addFrameUpdateAction({
       name: moveCameraToTargetSection.name,

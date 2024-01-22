@@ -120,7 +120,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onSpecPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }
@@ -130,7 +130,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onBatteryPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }
@@ -140,7 +140,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onBMSPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }
@@ -150,7 +150,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onMCUPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }
@@ -160,7 +160,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onElectricMotorPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }
@@ -170,7 +170,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onRegenerativeBrakingPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }
@@ -180,7 +180,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onUserReviewPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }
@@ -190,7 +190,7 @@ const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
 
   const onDetailPolygonClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.');
 
       return;
     }

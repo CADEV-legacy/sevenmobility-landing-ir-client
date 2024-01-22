@@ -16,7 +16,7 @@ const DefaultLayout: React.FC = () => {
 
   const onLogoClick = () => {
     if (section === 'loading') {
-      enqueueSnackbar('로딩 중에는 URL을 이동할 수 없습니다.', { variant: 'error' });
+      enqueueSnackbar('로딩 중에는 URL을 이동할 수 없습니다.');
 
       return;
     }
