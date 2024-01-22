@@ -1,26 +1,26 @@
 import { create } from 'zustand';
 
-import { MotorcycleIIIDM, SECTION_TYPES, SectionType } from '@/3ds';
+import { ControlledSection, MotorcycleIIIDM, Section } from '@/3ds';
 import { IIIDMCore } from '@/IIIDM/IIIDMCore';
 import { SETTINGS } from '@/settings';
 
 type IIIDMStoreProps = {
   core: IIIDMCore | null;
   motorcycleIIIDM?: MotorcycleIIIDM;
-  sectionType: SectionType;
+  section: Section;
   sectionProgress: number;
 } & IIIDMStoreActions;
 
 interface IIIDMStoreActions {
   getMotorcycleIIIDM(): MotorcycleIIIDM | null;
-  setSectionType: (newSectionType: SectionType) => void;
+  setSection: (newSection: ControlledSection) => void;
   setSectionProgress: (newSectionProgress: number) => void;
 }
 
 const DEFAULT_STORE = {
   core: null,
   motorcycleIIIDM: undefined,
-  sectionType: SECTION_TYPES[0],
+  section: 'loading' as Section,
   sectionProgress: 0,
 };
 
@@ -40,12 +40,12 @@ export const useIIIDMStore = create<IIIDMStoreProps>((set, get) => ({
 
     return newMotorcycleIIIDM;
   },
-  setSectionType: newSectionType => {
-    const { sectionType } = get();
+  setSection: newSection => {
+    const { section } = get();
 
-    if (sectionType === newSectionType) return;
+    if (section === newSection) return;
 
-    set({ sectionType: newSectionType });
+    set({ section: newSection });
   },
   setSectionProgress: newSectionProgress => {
     const { sectionProgress } = get();

@@ -11,7 +11,7 @@ export const SpeedometerContent = styled('div')({
   display: 'flex',
   flexDirection: 'column',
   position: 'absolute',
-  top: '52%',
+  top: '45%',
   left: '35%',
   width: '30%',
 });

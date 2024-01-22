@@ -1,23 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import * as S from './page.styles';
 
-import { MotorcycleIIIDM } from '@/3ds';
+import { CONTROLLED_SECTIONS, ControlledSection, MotorcycleIIIDM } from '@/3ds';
 import { useIIIDMStore } from '@/stores';
 
 const Page: React.FC = () => {
-  const { getMotorcycleIIIDM, setSectionType, setSectionProgress } = useIIIDMStore();
+  const [searchParams] = useSearchParams();
+  const { getMotorcycleIIIDM, setSection, setSectionProgress } = useIIIDMStore();
   const motorcycleIIIDMRef = useRef<MotorcycleIIIDM | null>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
   const [opacityScore, setOpacityScore] = useState(1);
 
-  const runMotorcycleIIIDM = () => {
+  /**
+   * NOTE: Run motorcycleIIIDM when component mounted.
+   * - If motorcycleIIIDM is not created yet, create new one.
+   * - If motorcycleIIIDM is already created, change POV to target section.
+   * - If target section is not valid, throw error.
+   */
+  useEffect(() => {
+    const targetSection = searchParams.get('section');
+
     if (!canvasWrapperRef.current) throw new Error('Canvas wrapper not rendered yet.');
+
+    if (targetSection && !CONTROLLED_SECTIONS.includes(targetSection as ControlledSection))
+      throw new Error('Invalid section has inserted.');
 
     if (!motorcycleIIIDMRef.current) {
       const newMotorcycleIIIDM = getMotorcycleIIIDM();
+      const motorcycleSection = searchParams.get('section');
 
       if (!newMotorcycleIIIDM) throw new Error('Failed to get new motorcycleIIIDM.');
 
@@ -32,26 +46,21 @@ const Page: React.FC = () => {
       newMotorcycleIIIDM.onHideTitleAction = opacityScore => {
         setOpacityScore(opacityScore);
       };
-      newMotorcycleIIIDM.setSectionTypeAction = sectionType => {
-        setSectionType(sectionType);
+      newMotorcycleIIIDM.setSectionAction = section => {
+        setSection(section);
       };
       newMotorcycleIIIDM.setSectionProgressAction = sectionProgress => {
         setSectionProgress(sectionProgress);
       };
+      newMotorcycleIIIDM.routeSectionTarget = motorcycleSection as ControlledSection;
+
       newMotorcycleIIIDM.activate();
       motorcycleIIIDMRef.current = newMotorcycleIIIDM;
-
-      console.info('MotorcycleIIIDM initialized.', newMotorcycleIIIDM);
     } else {
-      motorcycleIIIDMRef.current.activate();
+      motorcycleIIIDMRef.current.changePOVToTargetSection(targetSection as ControlledSection);
     }
-  };
-
-  // NOTE: Initialize motorcycleIIIDM.
-  useEffect(() => {
-    runMotorcycleIIIDM();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   // NOTE: Handle resize event for motorcycleIIIDM.
   useEffect(() => {

@@ -19,30 +19,16 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 import { GroundMirror, Smoke } from './components';
 import { SECTION_DATA } from './resources';
-import { SectionController } from './SectionController';
+import { CONTROLLED_SECTIONS, ControlledSection, SectionController } from './SectionController';
 
 import { IIIDM, IIIDMCore } from '@/IIIDM';
 import { OnLoadCompleteAction, OnLoadProgressAction } from '@/IIIDM/workers';
 
 type OnHideTitleAction = (opacityScore: number) => void;
 
-type SetSectionTypeAction = (sectionType: SectionType) => void;
+type SetSectionAction = (section: ControlledSection) => void;
 
 type SetSectionProgressAction = (sectionProgress: number) => void;
-
-export type SectionType = keyof typeof SECTION_DATA;
-
-export const SECTION_TYPES: SectionType[] = [
-  'loading',
-  'intro',
-  'battery',
-  'bms',
-  'mcu',
-  'electricMotor',
-  'regenerativeBraking',
-  'userReview',
-  'detail',
-];
 
 export class MotorcycleIIIDM extends IIIDM {
   private motorcycleVelocity = SECTION_DATA.loading.motorcycle.velocity.initialValue;
@@ -51,9 +37,10 @@ export class MotorcycleIIIDM extends IIIDM {
   private activeCameraLookAt = new Vector3().copy(SECTION_DATA.loading.camera.lookAt);
   private sectionController: SectionController;
   private isWireframeMode = false;
+  private _routeSectionTarget: ControlledSection | null = null;
 
   private _onHideTitleAction: OnHideTitleAction | null = null;
-  private _setSectionTypeAction: SetSectionTypeAction | null = null;
+  private _setSectionAction: SetSectionAction | null = null;
   private _setSectionProgressAction: SetSectionProgressAction | null = null;
 
   /**
@@ -69,8 +56,8 @@ export class MotorcycleIIIDM extends IIIDM {
 
     this.sectionController = new SectionController({
       battery: {
-        show: this.showWireframe.bind(this),
-        unshow: this.unshowWireframe.bind(this),
+        activate: this.showWireframe.bind(this),
+        deactivate: this.unshowWireframe.bind(this),
       },
     });
 
@@ -116,12 +103,16 @@ export class MotorcycleIIIDM extends IIIDM {
     this._onHideTitleAction = action;
   }
 
-  set setSectionTypeAction(action: SetSectionTypeAction) {
-    this._setSectionTypeAction = action;
+  set setSectionAction(action: SetSectionAction) {
+    this._setSectionAction = action;
   }
 
   set setSectionProgressAction(action: SetSectionProgressAction) {
     this._setSectionProgressAction = action;
+  }
+
+  set routeSectionTarget(target: ControlledSection | null) {
+    this._routeSectionTarget = target;
   }
 
   private async loadMotorcycle() {
@@ -320,151 +311,263 @@ export class MotorcycleIIIDM extends IIIDM {
     this.renderer.autoClear = true;
   }
 
+  // NOTE: Move camera POV from active to prev controlled section.
   private moveCameraPOVToPrev() {
-    const sectionTypeInfo = this.sectionController.getSectionTypeInfo();
-    const sectionCameraInfoMap = this.sectionController.sectionCameraInfoMap;
-    const sectionExecutorInfoMap = this.sectionController.sectionExecutorInfoMap;
+    const {
+      prevControlledSection,
+      activeControlledSection,
+      nextControlledSection,
+      controlledSectionInfo,
+      prev,
+    } = this.sectionController;
 
-    if (sectionTypeInfo.active === 'loading' || !sectionTypeInfo.prev) {
-      this.logWorker.warn('Scroll event is not available in prev section.');
-      return;
-    }
+    if (activeControlledSection === 'loading') throw this.logWorker.error('Invalid section.');
 
-    if (!this._setSectionTypeAction)
-      throw this.logWorker.error('setSectionTypeAction is must set.');
+    if (!this._setSectionAction) throw this.logWorker.error('setSectionAction is must set.');
 
     if (!this._setSectionProgressAction)
       throw this.logWorker.error('setSectionProgressAction is must set.');
 
-    const aForthTotalCameraXPosition = Math.abs(
-      sectionTypeInfo.next
-        ? (SECTION_DATA[sectionTypeInfo.next].camera.position.x -
-            SECTION_DATA[sectionTypeInfo.active].camera.position.x) /
-            4
-        : (SECTION_DATA[sectionTypeInfo.active].camera.position.x -
-            SECTION_DATA[sectionTypeInfo.prev].camera.position.x) /
-            4
-    );
+    if (!prevControlledSection && nextControlledSection) {
+      this.logWorker.info('Section is Spec.');
+      const aForthTotalCameraXPosition =
+        Math.abs(
+          SECTION_DATA[nextControlledSection].camera.position.x -
+            SECTION_DATA[activeControlledSection].camera.position.x
+        ) / 4;
 
-    const leftCameraXPosition = Math.abs(
-      this.activeCamera.position.x - SECTION_DATA[sectionTypeInfo.active].camera.position.x
-    );
+      const leftCameraXPosition = Math.abs(
+        this.activeCamera.position.x - SECTION_DATA[activeControlledSection].camera.position.x
+      );
 
-    const targetCameraInfoMap =
-      sectionCameraInfoMap[sectionTypeInfo.active] ?? sectionCameraInfoMap[sectionTypeInfo.prev];
+      if (leftCameraXPosition >= aForthTotalCameraXPosition * 3) {
+        controlledSectionInfo[nextControlledSection].activate?.();
+      } else if (leftCameraXPosition < aForthTotalCameraXPosition * 3 && leftCameraXPosition >= 0) {
+        controlledSectionInfo[nextControlledSection].deactivate?.();
+      } else {
+        controlledSectionInfo[activeControlledSection].activate?.();
+      }
 
-    if (leftCameraXPosition >= aForthTotalCameraXPosition * 3) {
-      sectionExecutorInfoMap[sectionTypeInfo.next ?? sectionTypeInfo.active]?.show();
-    } else if (leftCameraXPosition < aForthTotalCameraXPosition * 3 && leftCameraXPosition >= 0) {
-      sectionExecutorInfoMap[sectionTypeInfo.next ?? sectionTypeInfo.active]?.unshow();
-    } else {
-      sectionExecutorInfoMap[sectionTypeInfo.active]?.show();
+      if (
+        leftCameraXPosition >=
+        controlledSectionInfo[nextControlledSection].positionAdditionalVector.x
+      ) {
+        this.activeCamera.position.sub(
+          controlledSectionInfo[nextControlledSection].positionAdditionalVector
+        );
+        this.activeCameraLookAt.sub(
+          controlledSectionInfo[nextControlledSection].lookAtAdditionalVector
+        );
+        this.activeCamera.lookAt(this.activeCameraLookAt);
+        this.activeCamera.updateProjectionMatrix();
+
+        this._setSectionProgressAction(
+          (leftCameraXPosition / (aForthTotalCameraXPosition * 4)) * 100
+        );
+      } else {
+        this.activeCamera.position.set(
+          SECTION_DATA[activeControlledSection].camera.position.x,
+          SECTION_DATA[activeControlledSection].camera.position.y,
+          SECTION_DATA[activeControlledSection].camera.position.z
+        );
+        this.activeCameraLookAt.set(
+          SECTION_DATA[activeControlledSection].camera.lookAt.x,
+          SECTION_DATA[activeControlledSection].camera.lookAt.y,
+          SECTION_DATA[activeControlledSection].camera.lookAt.z
+        );
+        this.activeCamera.lookAt(this.activeCameraLookAt);
+        this.activeCamera.updateProjectionMatrix();
+
+        this._setSectionProgressAction(0);
+      }
+
+      return;
     }
 
-    if (leftCameraXPosition >= Math.abs(targetCameraInfoMap.positionAdditionalVector.x)) {
-      this.activeCamera.position.sub(targetCameraInfoMap.positionAdditionalVector);
-      this.activeCameraLookAt.sub(targetCameraInfoMap.lookAtAdditionalVector);
+    if (prevControlledSection && nextControlledSection) {
+      const aForthTotalCameraXPosition =
+        Math.abs(
+          SECTION_DATA[nextControlledSection].camera.position.x -
+            SECTION_DATA[activeControlledSection].camera.position.x
+        ) / 4;
+
+      const leftCameraXPosition = Math.abs(
+        this.activeCamera.position.x - SECTION_DATA[activeControlledSection].camera.position.x
+      );
+
+      if (leftCameraXPosition >= aForthTotalCameraXPosition * 3) {
+        controlledSectionInfo[nextControlledSection].activate?.();
+      } else if (
+        leftCameraXPosition < aForthTotalCameraXPosition * 3 &&
+        leftCameraXPosition >= aForthTotalCameraXPosition
+      ) {
+        controlledSectionInfo[nextControlledSection].deactivate?.();
+      } else {
+        controlledSectionInfo[activeControlledSection].activate?.();
+      }
+
+      if (
+        leftCameraXPosition >=
+        Math.abs(controlledSectionInfo[nextControlledSection].positionAdditionalVector.x)
+      ) {
+        this.activeCamera.position.sub(
+          controlledSectionInfo[nextControlledSection].positionAdditionalVector
+        );
+        this.activeCameraLookAt.sub(
+          controlledSectionInfo[nextControlledSection].lookAtAdditionalVector
+        );
+        this.activeCamera.lookAt(this.activeCameraLookAt);
+        this.activeCamera.updateProjectionMatrix();
+
+        this._setSectionProgressAction(
+          (leftCameraXPosition / (aForthTotalCameraXPosition * 4)) * 100
+        );
+      } else {
+        this.activeCamera.position.set(
+          SECTION_DATA[activeControlledSection].camera.position.x,
+          SECTION_DATA[activeControlledSection].camera.position.y,
+          SECTION_DATA[activeControlledSection].camera.position.z
+        );
+        this.activeCameraLookAt.set(
+          SECTION_DATA[activeControlledSection].camera.lookAt.x,
+          SECTION_DATA[activeControlledSection].camera.lookAt.y,
+          SECTION_DATA[activeControlledSection].camera.lookAt.z
+        );
+        this.activeCamera.lookAt(this.activeCameraLookAt);
+        this.activeCamera.updateProjectionMatrix();
+
+        prev.bind(this.sectionController)();
+
+        this._setSectionProgressAction(100);
+        this._setSectionAction(prevControlledSection);
+      }
+
+      return;
+    }
+
+    if (prevControlledSection && !nextControlledSection) {
+      const aForthTotalCameraXPosition =
+        Math.abs(
+          SECTION_DATA[activeControlledSection].camera.position.x -
+            SECTION_DATA[prevControlledSection].camera.position.x
+        ) / 4;
+
+      this.activeCamera.position.sub(
+        controlledSectionInfo[activeControlledSection].positionAdditionalVector
+      );
+      this.activeCameraLookAt.sub(
+        controlledSectionInfo[activeControlledSection].lookAtAdditionalVector
+      );
       this.activeCamera.lookAt(this.activeCameraLookAt);
       this.activeCamera.updateProjectionMatrix();
+
+      const leftCameraXPosition = Math.abs(
+        this.activeCamera.position.x - SECTION_DATA[prevControlledSection].camera.position.x
+      );
+
+      controlledSectionInfo[activeControlledSection].activate?.();
+
+      prev.bind(this.sectionController)();
 
       this._setSectionProgressAction(
-        Math.round((leftCameraXPosition / (aForthTotalCameraXPosition * 4)) * 100)
+        (leftCameraXPosition / (aForthTotalCameraXPosition * 4)) * 100
       );
-    } else {
-      this.activeCamera.position.set(
-        SECTION_DATA[sectionTypeInfo.active].camera.position.x,
-        SECTION_DATA[sectionTypeInfo.active].camera.position.y,
-        SECTION_DATA[sectionTypeInfo.active].camera.position.z
-      );
-      this.activeCameraLookAt.set(
-        SECTION_DATA[sectionTypeInfo.active].camera.lookAt.x,
-        SECTION_DATA[sectionTypeInfo.active].camera.lookAt.y,
-        SECTION_DATA[sectionTypeInfo.active].camera.lookAt.z
-      );
-      this.activeCamera.lookAt(this.activeCameraLookAt);
-      this.activeCamera.updateProjectionMatrix();
-      this.sectionController.prev();
+      this._setSectionAction(activeControlledSection);
 
-      this._setSectionTypeAction(sectionTypeInfo.prev);
-      this._setSectionProgressAction(100);
+      return;
     }
   }
 
+  // NOTE: Move camera POV from active to next controlled section.
   private moveCameraPOVToNext() {
-    const sectionTypeInfo = this.sectionController.getSectionTypeInfo();
-    const sectionCameraInfoMap = this.sectionController.sectionCameraInfoMap;
-    const sectionExecutorInfoMap = this.sectionController.sectionExecutorInfoMap;
-
-    if (sectionTypeInfo.active === 'detail' || !sectionTypeInfo.next) {
-      this.logWorker.warn('Scroll event is not available in next section.');
-
-      return;
-    }
+    const { activeControlledSection, nextControlledSection, controlledSectionInfo, next } =
+      this.sectionController;
 
     if (!this._setSectionProgressAction)
       throw this.logWorker.error('setSectionProgressAction is must set.');
 
-    if (!this._setSectionTypeAction)
-      throw this.logWorker.error('setSectionTypeAction is must set.');
+    if (!this._setSectionAction) throw this.logWorker.error('setSectionAction is must set.');
+
+    if (!nextControlledSection) {
+      this.activeCamera.position.set(
+        SECTION_DATA[activeControlledSection].camera.position.x,
+        SECTION_DATA[activeControlledSection].camera.position.y,
+        SECTION_DATA[activeControlledSection].camera.position.z
+      );
+      this.activeCameraLookAt.set(
+        SECTION_DATA[activeControlledSection].camera.lookAt.x,
+        SECTION_DATA[activeControlledSection].camera.lookAt.y,
+        SECTION_DATA[activeControlledSection].camera.lookAt.z
+      );
+      this.activeCamera.lookAt(this.activeCameraLookAt);
+      this.activeCamera.updateProjectionMatrix();
+
+      this._setSectionAction('detail');
+      this._setSectionProgressAction(100);
+
+      return;
+    }
 
     const aForthTotalCameraXPosition = Math.abs(
-      (SECTION_DATA[sectionTypeInfo.next].camera.position.x -
-        SECTION_DATA[sectionTypeInfo.active].camera.position.x) /
+      (SECTION_DATA[nextControlledSection].camera.position.x -
+        SECTION_DATA[activeControlledSection].camera.position.x) /
         4
     );
 
     const leftCameraXPosition = Math.abs(
-      SECTION_DATA[sectionTypeInfo.next].camera.position.x - this.activeCamera.position.x
+      SECTION_DATA[nextControlledSection].camera.position.x - this.activeCamera.position.x
     );
 
     // NOTE: Execute active section function.
-    if (leftCameraXPosition >= aForthTotalCameraXPosition * 3) {
-      sectionExecutorInfoMap[sectionTypeInfo.active]?.show();
+    if (
+      leftCameraXPosition >= aForthTotalCameraXPosition * 3 &&
+      activeControlledSection !== 'loading'
+    ) {
+      controlledSectionInfo[activeControlledSection].activate?.();
     } else if (
       leftCameraXPosition < aForthTotalCameraXPosition * 3 &&
-      leftCameraXPosition >= aForthTotalCameraXPosition
+      leftCameraXPosition >= aForthTotalCameraXPosition &&
+      activeControlledSection !== 'loading'
     ) {
-      sectionExecutorInfoMap[sectionTypeInfo.active]?.unshow();
+      controlledSectionInfo[activeControlledSection].deactivate?.();
     } else {
-      sectionExecutorInfoMap[sectionTypeInfo.next]?.show();
+      controlledSectionInfo[nextControlledSection].activate?.();
     }
 
     if (
       leftCameraXPosition >
-      Math.abs(sectionCameraInfoMap[sectionTypeInfo.active].positionAdditionalVector.x)
+      Math.abs(controlledSectionInfo[nextControlledSection].positionAdditionalVector.x)
     ) {
       this.activeCamera.position.add(
-        sectionCameraInfoMap[sectionTypeInfo.active].positionAdditionalVector
+        controlledSectionInfo[nextControlledSection].positionAdditionalVector
       );
       this.activeCameraLookAt.add(
-        sectionCameraInfoMap[sectionTypeInfo.active].lookAtAdditionalVector
+        controlledSectionInfo[nextControlledSection].lookAtAdditionalVector
       );
       this.activeCamera.lookAt(this.activeCameraLookAt);
       this.activeCamera.updateProjectionMatrix();
 
       this._setSectionProgressAction(
-        Math.round(
-          ((aForthTotalCameraXPosition * 4 - leftCameraXPosition) /
-            (aForthTotalCameraXPosition * 4)) *
-            100
-        )
+        ((aForthTotalCameraXPosition * 4 - leftCameraXPosition) /
+          (aForthTotalCameraXPosition * 4)) *
+          100
       );
     } else {
       this.activeCamera.position.set(
-        SECTION_DATA[sectionTypeInfo.next].camera.position.x,
-        SECTION_DATA[sectionTypeInfo.next].camera.position.y,
-        SECTION_DATA[sectionTypeInfo.next].camera.position.z
+        SECTION_DATA[nextControlledSection].camera.position.x,
+        SECTION_DATA[nextControlledSection].camera.position.y,
+        SECTION_DATA[nextControlledSection].camera.position.z
       );
       this.activeCameraLookAt.set(
-        SECTION_DATA[sectionTypeInfo.next].camera.lookAt.x,
-        SECTION_DATA[sectionTypeInfo.next].camera.lookAt.y,
-        SECTION_DATA[sectionTypeInfo.next].camera.lookAt.z
+        SECTION_DATA[nextControlledSection].camera.lookAt.x,
+        SECTION_DATA[nextControlledSection].camera.lookAt.y,
+        SECTION_DATA[nextControlledSection].camera.lookAt.z
       );
       this.activeCamera.lookAt(this.activeCameraLookAt);
       this.activeCamera.updateProjectionMatrix();
-      this.sectionController.next();
+      next.bind(this.sectionController)();
 
-      this._setSectionTypeAction(sectionTypeInfo.next);
+      this._setSectionAction(nextControlledSection);
       this._setSectionProgressAction(0);
     }
   }
@@ -497,16 +600,16 @@ export class MotorcycleIIIDM extends IIIDM {
       }
     });
 
-    const spotLight = new SpotLight(SECTION_DATA.intro.spotLight.color, 150);
+    const spotLight = new SpotLight(SECTION_DATA.spec.spotLight.color, 150);
     spotLight.position.set(
-      SECTION_DATA.intro.spotLight.position.x,
-      SECTION_DATA.intro.spotLight.position.y,
-      SECTION_DATA.intro.spotLight.position.z
+      SECTION_DATA.spec.spotLight.position.x,
+      SECTION_DATA.spec.spotLight.position.y,
+      SECTION_DATA.spec.spotLight.position.z
     );
     spotLight.angle = Math.PI / 16;
     spotLight.penumbra = 0;
     spotLight.castShadow = true;
-    spotLight.name = SECTION_DATA.intro.objectName.spotLight;
+    spotLight.name = SECTION_DATA.spec.objectName.spotLight;
 
     this.addObjectsToScene(
       true,
@@ -518,22 +621,157 @@ export class MotorcycleIIIDM extends IIIDM {
   }
 
   // NOTE: Change POV to intro section.
-  private changePOVToIntroSection() {
-    const moveCameraToIntroSection = () => {
-      const sectionTypeInfo = this.sectionController.getSectionTypeInfo();
+  private changePOVToSpecSection() {
+    return new Promise<void>(resolve => {
+      const moveCameraToSpecSection = () => {
+        const { activeControlledSection } = this.sectionController;
 
-      this.moveCameraPOVToNext();
+        if (activeControlledSection === 'spec') {
+          this.frameManager.removeFrameUpdateAction(moveCameraToSpecSection.name);
 
-      if (sectionTypeInfo.active === 'intro') {
-        this.frameManager.removeFrameUpdateAction(moveCameraToIntroSection.name);
+          return resolve();
+        }
+
+        this.moveCameraPOVToNext();
+      };
+
+      this.frameManager.addFrameUpdateAction({
+        name: moveCameraToSpecSection.name,
+        action: moveCameraToSpecSection.bind(this),
+      });
+      this.frameManager.activate();
+    });
+  }
+
+  changePOVToTargetSection(targetSection: ControlledSection) {
+    const {
+      activeControlledSection,
+      controlledSectionInfo,
+      getAdditionalVector,
+      changeActiveControlledSection,
+    } = this.sectionController;
+    // NOTE: If target section is active section, return.
+    if (targetSection === activeControlledSection) return;
+
+    if (activeControlledSection === 'loading')
+      throw this.logWorker.error(
+        'Change POV to target section can not executed on loading section.'
+      );
+
+    // NOTE: Calculate additional vector for camera position and lookAt.
+    const targetSectionCameraPositionAdditionalVector = getAdditionalVector(
+      this.activeCamera.position,
+      SECTION_DATA[targetSection].camera.position,
+      SECTION_DATA[targetSection].camera.targetChangeCount
+    );
+    const targetSectionLookAtAdditionalVector = getAdditionalVector(
+      this.activeCameraLookAt,
+      SECTION_DATA[targetSection].camera.lookAt,
+      SECTION_DATA[targetSection].camera.targetChangeCount
+    );
+
+    const totalCameraXPosition = Math.abs(
+      SECTION_DATA[targetSection].camera.position.x - this.activeCamera.position.x
+    );
+    const activeControlledSectionIndex = CONTROLLED_SECTIONS.indexOf(activeControlledSection);
+    const targetSectionIndex = CONTROLLED_SECTIONS.indexOf(targetSection);
+    const dividedCameraXPosition =
+      totalCameraXPosition / Math.abs(targetSectionIndex - activeControlledSectionIndex);
+    const changeSectionDirection =
+      targetSectionIndex - activeControlledSectionIndex > 0 ? 'PLUS' : 'MINUS';
+    let currentSectionIndex = activeControlledSectionIndex;
+
+    // NOTE: Deactivate all of section.
+    controlledSectionInfo.spec.deactivate?.();
+    controlledSectionInfo.battery.deactivate?.();
+    controlledSectionInfo.bms.deactivate?.();
+    controlledSectionInfo.mcu.deactivate?.();
+    controlledSectionInfo.electricMotor.deactivate?.();
+    controlledSectionInfo.regenerativeBraking.deactivate?.();
+    controlledSectionInfo.userReview.deactivate?.();
+    controlledSectionInfo.detail.deactivate?.();
+
+    const moveCameraToTargetSection = () => {
+      if (!this._setSectionProgressAction)
+        throw this.logWorker.error('setSectionProgressAction is must set.');
+
+      if (!this._setSectionAction) throw this.logWorker.error('setSectionAction is must set.');
+
+      const leftCameraXPosition = Math.abs(
+        this.activeCamera.position.x - SECTION_DATA[targetSection].camera.position.x
+      );
+
+      if (totalCameraXPosition / 4 >= leftCameraXPosition) {
+        controlledSectionInfo[targetSection].activate?.();
+      }
+
+      if (leftCameraXPosition > Math.abs(targetSectionCameraPositionAdditionalVector.x)) {
+        this.activeCamera.position.add(targetSectionCameraPositionAdditionalVector);
+        this.activeCameraLookAt.add(targetSectionLookAtAdditionalVector);
+        this.activeCamera.lookAt(this.activeCameraLookAt);
+        this.activeCamera.updateProjectionMatrix();
+
+        if (changeSectionDirection === 'PLUS') {
+          if (
+            leftCameraXPosition <=
+            dividedCameraXPosition * Math.abs(targetSectionIndex - currentSectionIndex - 1)
+          ) {
+            currentSectionIndex += 1;
+
+            this._setSectionAction(CONTROLLED_SECTIONS[currentSectionIndex]);
+            this._setSectionProgressAction(0);
+          } else {
+            this._setSectionProgressAction(
+              ((dividedCameraXPosition * (targetSectionIndex - currentSectionIndex) -
+                leftCameraXPosition) /
+                dividedCameraXPosition) *
+                100
+            );
+          }
+        } else {
+          if (
+            leftCameraXPosition <=
+            dividedCameraXPosition * Math.abs(currentSectionIndex - targetSectionIndex)
+          ) {
+            currentSectionIndex -= 1;
+
+            this._setSectionAction(CONTROLLED_SECTIONS[currentSectionIndex]);
+            this._setSectionProgressAction(100);
+          } else {
+            this._setSectionProgressAction(
+              ((leftCameraXPosition -
+                dividedCameraXPosition * (currentSectionIndex - targetSectionIndex)) /
+                dividedCameraXPosition) *
+                100
+            );
+          }
+        }
+      } else {
+        this.activeCamera.position.set(
+          SECTION_DATA[targetSection].camera.position.x,
+          SECTION_DATA[targetSection].camera.position.y,
+          SECTION_DATA[targetSection].camera.position.z
+        );
+        this.activeCameraLookAt.set(
+          SECTION_DATA[targetSection].camera.lookAt.x,
+          SECTION_DATA[targetSection].camera.lookAt.y,
+          SECTION_DATA[targetSection].camera.lookAt.z
+        );
+        this.activeCamera.lookAt(this.activeCameraLookAt);
+        this.activeCamera.updateProjectionMatrix();
+
+        this._setSectionProgressAction(targetSection === 'detail' ? 100 : 0);
+        this._setSectionAction(targetSection);
+        changeActiveControlledSection.bind(this.sectionController)(targetSection);
+        this.frameManager.removeFrameUpdateAction(moveCameraToTargetSection.name);
 
         return;
       }
     };
 
     this.frameManager.addFrameUpdateAction({
-      name: moveCameraToIntroSection.name,
-      action: moveCameraToIntroSection.bind(this),
+      name: moveCameraToTargetSection.name,
+      action: moveCameraToTargetSection.bind(this),
     });
     this.frameManager.activate();
   }
@@ -549,10 +787,10 @@ export class MotorcycleIIIDM extends IIIDM {
   }
 
   scroll(wheelEvent: WheelEvent) {
-    const activeSectionType = this.sectionController.getSectionTypeInfo().active;
+    const { activeControlledSection } = this.sectionController;
 
-    if (activeSectionType === 'loading') {
-      this.logWorker.warn('Scroll event is not available in loading section.');
+    if (activeControlledSection === 'loading') {
+      this.logWorker.warn('Scroll event is not available in this section.');
 
       return;
     }
@@ -725,10 +963,14 @@ export class MotorcycleIIIDM extends IIIDM {
 
     this.startTheEngine();
 
-    setTimeout(() => {
+    setTimeout(async () => {
       this.removeDirectionalLight();
       this.turnOnTheLight();
-      this.changePOVToIntroSection();
+      await this.changePOVToSpecSection();
+
+      if (this._routeSectionTarget) {
+        this.changePOVToTargetSection(this._routeSectionTarget);
+      }
     }, 800);
 
     // this.povHelper();

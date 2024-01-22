@@ -87,7 +87,7 @@ const LOADING_SECTION_DATA = {
   },
 };
 
-const INTRO_SECTION_DATA = {
+const SPEC_SECTION_DATA = {
   objectName: {
     spotLight: 'spotLight',
   },
@@ -95,6 +95,7 @@ const INTRO_SECTION_DATA = {
     position: new Vector3(-1.5, 1, -5),
     lookAt: new Vector3(-1.5, 1, 0),
     changeCount: 100,
+    targetChangeCount: 100,
   },
   spotLight: {
     color: new Color(0xffffff),
@@ -108,6 +109,7 @@ const BATTERY_SECTION_DATA = {
     position: new Vector3(-0.6, 1, -2),
     lookAt: new Vector3(0.5, 0.2, 0),
     changeCount: 200,
+    targetChangeCount: 100,
   },
 };
 
@@ -117,6 +119,7 @@ const BMS_SECTION_DATA = {
     position: new Vector3(-2, 0.8, -0.8),
     lookAt: new Vector3(0, 0.4, -0.4),
     changeCount: 200,
+    targetChangeCount: 100,
   },
 };
 
@@ -126,6 +129,7 @@ const MCU_SECTION_DATA = {
     position: new Vector3(-1, 0.4, -0.8),
     lookAt: new Vector3(0, 0, 0),
     changeCount: 200,
+    targetChangeCount: 100,
   },
 };
 
@@ -135,6 +139,7 @@ const ELECTRIC_MOTOR_SECTION_DATA = {
     position: new Vector3(3, 0.75, -2.25),
     lookAt: new Vector3(2, 0.5, 0),
     changeCount: 200,
+    targetChangeCount: 100,
   },
 };
 
@@ -144,6 +149,7 @@ const REGENERATIVE_BRAKING_SECTION_DATA = {
     position: new Vector3(1.5, 1, -3),
     lookAt: new Vector3(1.5, 0.6, 0),
     changeCount: 200,
+    targetChangeCount: 100,
   },
 };
 
@@ -153,6 +159,7 @@ const USER_REVIEW_SECTION_DATA = {
     position: new Vector3(4, 1.5, -3),
     lookAt: new Vector3(1, 1, 0),
     changeCount: 200,
+    targetChangeCount: 100,
   },
 };
 
@@ -162,12 +169,13 @@ const DETAIL_SECTION_DATA = {
     position: new Vector3(-4, 1.5, 1),
     lookAt: new Vector3(0, 1, 0),
     changeCount: 200,
+    targetChangeCount: 100,
   },
 };
 
 export const SECTION_DATA = {
   loading: LOADING_SECTION_DATA,
-  intro: INTRO_SECTION_DATA,
+  spec: SPEC_SECTION_DATA,
   battery: BATTERY_SECTION_DATA,
   bms: BMS_SECTION_DATA,
   mcu: MCU_SECTION_DATA,

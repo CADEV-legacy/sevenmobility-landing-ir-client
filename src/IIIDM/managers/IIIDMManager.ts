@@ -31,7 +31,11 @@ export abstract class IIIDMManager {
 
   /** NOTE: Make this manager instance for available. */
   protected onInitialize() {
-    if (this._isInitialized) throw this.logWorker.error('Already initialized.');
+    if (this._isInitialized) {
+      this.logWorker.warn('Already initialized.');
+
+      return;
+    }
 
     this._isInitialized = true;
 
@@ -40,9 +44,17 @@ export abstract class IIIDMManager {
 
   /** NOTE: Make working for role. */
   protected onActivate() {
-    if (!this._isInitialized) throw this.logWorker.error('Not initialized.');
+    if (!this._isInitialized) {
+      this.logWorker.warn('Not initialized.');
 
-    if (this._isActive) throw this.logWorker.error('Already activated.');
+      return;
+    }
+
+    if (this._isActive) {
+      this.logWorker.warn('Already activated.');
+
+      return;
+    }
 
     this._isActive = true;
 
@@ -51,9 +63,17 @@ export abstract class IIIDMManager {
 
   /** NOTE: Make not working for role. */
   protected onDeactivate() {
-    if (!this._isInitialized) throw this.logWorker.error('Not initialized.');
+    if (!this._isInitialized) {
+      this.logWorker.warn('Not initialized.');
 
-    if (!this._isActive) throw this.logWorker.error('Already deactivated.');
+      return;
+    }
+
+    if (!this._isActive) {
+      this.logWorker.warn('Already deactivated.');
+
+      return;
+    }
 
     this._isActive = false;
 
