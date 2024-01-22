@@ -36,7 +36,6 @@ export class MotorcycleIIIDM extends IIIDM {
   private titleOpacityScoreSub = SECTION_DATA.loading.title.opacityScore.sub.initialValue;
   private activeCameraLookAt = new Vector3().copy(SECTION_DATA.loading.camera.lookAt);
   private sectionController: SectionController;
-  private isWireframeMode = false;
   private _routeSectionTarget: ControlledSection | null = null;
 
   private _onHideTitleAction: OnHideTitleAction | null = null;
@@ -56,8 +55,12 @@ export class MotorcycleIIIDM extends IIIDM {
 
     this.sectionController = new SectionController({
       battery: {
-        activate: this.showWireframe.bind(this),
-        deactivate: this.unshowWireframe.bind(this),
+        activate: this.onBatterySectionActivate.bind(this),
+        deactivate: this.onBatterySectionDeactivate.bind(this),
+      },
+      detail: {
+        activate: this.onDetailSectionActivate.bind(this),
+        deactivate: this.onDetailSectionDeactivate.bind(this),
       },
     });
 
@@ -850,56 +853,6 @@ export class MotorcycleIIIDM extends IIIDM {
     this.frameManager.activate();
   }
 
-  private showWireframe() {
-    if (this.isWireframeMode) return;
-
-    this.isWireframeMode = true;
-
-    this.activeScene.traverse(object => {
-      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
-        object.children
-          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
-          .map(child =>
-            child.traverse(grandChild => {
-              if (
-                grandChild instanceof Mesh &&
-                grandChild.isMesh &&
-                (grandChild.material instanceof MeshStandardMaterial ||
-                  grandChild.material instanceof MeshPhysicalMaterial)
-              ) {
-                grandChild.material.wireframe = this.isWireframeMode;
-              }
-            })
-          );
-      }
-    });
-  }
-
-  private unshowWireframe() {
-    if (!this.isWireframeMode) return;
-
-    this.isWireframeMode = false;
-
-    this.activeScene.traverse(object => {
-      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
-        object.children
-          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
-          .map(child =>
-            child.traverse(grandChild => {
-              if (
-                grandChild instanceof Mesh &&
-                grandChild.isMesh &&
-                (grandChild.material instanceof MeshStandardMaterial ||
-                  grandChild.material instanceof MeshPhysicalMaterial)
-              ) {
-                grandChild.material.wireframe = this.isWireframeMode;
-              }
-            })
-          );
-      }
-    });
-  }
-
   visibleMotorcycle() {}
 
   invisibleMotorcycle() {
@@ -925,6 +878,84 @@ export class MotorcycleIIIDM extends IIIDM {
         }
       });
     }
+  }
+
+  private onBatterySectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.battery.isActive) return;
+
+    this.activeScene.traverse(object => {
+      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+        object.children
+          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
+          .map(child =>
+            child.traverse(grandChild => {
+              if (
+                grandChild instanceof Mesh &&
+                grandChild.isMesh &&
+                (grandChild.material instanceof MeshStandardMaterial ||
+                  grandChild.material instanceof MeshPhysicalMaterial)
+              ) {
+                grandChild.material.wireframe = true;
+              }
+            })
+          );
+      }
+    });
+
+    controlledSectionInfo.battery.isActive = true;
+  }
+
+  private onBatterySectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.battery.isActive) return;
+
+    this.activeScene.traverse(object => {
+      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+        object.children
+          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
+          .map(child =>
+            child.traverse(grandChild => {
+              if (
+                grandChild instanceof Mesh &&
+                grandChild.isMesh &&
+                (grandChild.material instanceof MeshStandardMaterial ||
+                  grandChild.material instanceof MeshPhysicalMaterial)
+              ) {
+                grandChild.material.wireframe = false;
+              }
+            })
+          );
+      }
+    });
+
+    controlledSectionInfo.battery.isActive = false;
+  }
+
+  private onDetailSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.detail.isActive) return;
+
+    this.controlManager.activate();
+    this.controlManager.orbitControl.target = this.activeCameraLookAt;
+    this.controlManager.orbitControl.update();
+    this.controlManager.orbitControl.addEventListener('change', this.render.bind(this));
+
+    controlledSectionInfo.detail.isActive = true;
+  }
+
+  private onDetailSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.detail.isActive) return;
+
+    this.controlManager.deactivate();
+    this.controlManager.orbitControl.removeEventListener('change', this.render.bind(this));
+
+    controlledSectionInfo.detail.isActive = false;
   }
 
   private focusToBattery() {
@@ -957,9 +988,6 @@ export class MotorcycleIIIDM extends IIIDM {
 
     // NOTE: Load Model
     await this.loadMotorcycle();
-
-    // TODO: Remove this comment.
-    // this.activeScene.background = new Color(0xffffff);
 
     // NOTE: Loading Section
     await this.hideTitle();

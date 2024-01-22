@@ -166,8 +166,8 @@ const USER_REVIEW_SECTION_DATA = {
 const DETAIL_SECTION_DATA = {
   objectName: {},
   camera: {
-    position: new Vector3(-4, 1.5, 1),
-    lookAt: new Vector3(0, 1, 0),
+    position: new Vector3(-4, 2, 4),
+    lookAt: new Vector3(0, 0, 0),
     changeCount: 200,
     targetChangeCount: 100,
   },

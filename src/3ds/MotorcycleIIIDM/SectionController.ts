@@ -32,6 +32,7 @@ export const CONTROLLED_SECTIONS: ControlledSection[] = [
 type SectionInfoProps = {
   positionAdditionalVector: Vector3;
   lookAtAdditionalVector: Vector3;
+  isActive: boolean;
 };
 
 interface SectionInfoActions {
@@ -66,6 +67,7 @@ export class SectionController {
           SECTION_DATA.spec.camera.lookAt,
           SECTION_DATA.spec.camera.changeCount
         ),
+        isActive: false,
         ...controlledSectionInfoActions.spec,
       },
       battery: {
@@ -79,6 +81,7 @@ export class SectionController {
           SECTION_DATA.battery.camera.lookAt,
           SECTION_DATA.battery.camera.changeCount
         ),
+        isActive: false,
         ...controlledSectionInfoActions.battery,
       },
       bms: {
@@ -87,6 +90,7 @@ export class SectionController {
           SECTION_DATA.bms.camera.position,
           SECTION_DATA.bms.camera.changeCount
         ),
+        isActive: false,
         lookAtAdditionalVector: this.getAdditionalVector(
           SECTION_DATA.battery.camera.lookAt,
           SECTION_DATA.bms.camera.lookAt,
@@ -105,6 +109,7 @@ export class SectionController {
           SECTION_DATA.mcu.camera.lookAt,
           SECTION_DATA.mcu.camera.changeCount
         ),
+        isActive: false,
         ...controlledSectionInfoActions.mcu,
       },
       electricMotor: {
@@ -118,6 +123,7 @@ export class SectionController {
           SECTION_DATA.electricMotor.camera.lookAt,
           SECTION_DATA.electricMotor.camera.changeCount
         ),
+        isActive: false,
         ...controlledSectionInfoActions.electricMotor,
       },
       regenerativeBraking: {
@@ -131,6 +137,7 @@ export class SectionController {
           SECTION_DATA.regenerativeBraking.camera.lookAt,
           SECTION_DATA.regenerativeBraking.camera.changeCount
         ),
+        isActive: false,
         ...controlledSectionInfoActions.regenerativeBraking,
       },
       userReview: {
@@ -144,6 +151,7 @@ export class SectionController {
           SECTION_DATA.userReview.camera.lookAt,
           SECTION_DATA.userReview.camera.changeCount
         ),
+        isActive: false,
         ...controlledSectionInfoActions.userReview,
       },
       detail: {
@@ -157,6 +165,7 @@ export class SectionController {
           SECTION_DATA.detail.camera.lookAt,
           SECTION_DATA.detail.camera.changeCount
         ),
+        isActive: false,
         ...controlledSectionInfoActions.detail,
       },
     };
