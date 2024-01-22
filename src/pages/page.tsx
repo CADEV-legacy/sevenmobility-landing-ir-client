@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { useSnackbar } from 'notistack';
+
 import * as S from './page.styles';
 
 import { CONTROLLED_SECTIONS, ControlledSection, MotorcycleIIIDM } from '@/3ds';
@@ -9,6 +11,7 @@ import { useIIIDMStore } from '@/stores';
 const Page: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { getMotorcycleIIIDM, setSection, setSectionProgress } = useIIIDMStore();
+  const { enqueueSnackbar } = useSnackbar();
   const motorcycleIIIDMRef = useRef<MotorcycleIIIDM | null>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -24,41 +27,53 @@ const Page: React.FC = () => {
   useEffect(() => {
     const targetSection = searchParams.get('section');
 
-    if (!canvasWrapperRef.current) throw new Error('Canvas wrapper not rendered yet.');
+    try {
+      if (!canvasWrapperRef.current) throw new Error('캔버스가 아직 준비되지 않았습니다.');
 
-    if (targetSection && !CONTROLLED_SECTIONS.includes(targetSection as ControlledSection))
-      throw new Error('Invalid section has inserted.');
+      if (targetSection && !CONTROLLED_SECTIONS.includes(targetSection as ControlledSection))
+        throw new Error('불가능한 섹션이 입력되었습니다.');
 
-    if (!motorcycleIIIDMRef.current) {
-      const newMotorcycleIIIDM = getMotorcycleIIIDM();
-      const motorcycleSection = searchParams.get('section');
+      if (!motorcycleIIIDMRef.current) {
+        const newMotorcycleIIIDM = getMotorcycleIIIDM();
+        const motorcycleSection = searchParams.get('section');
 
-      if (!newMotorcycleIIIDM) throw new Error('Failed to get new motorcycleIIIDM.');
+        if (!newMotorcycleIIIDM) throw new Error('오토바이 모델을 불러오는데 실패했습니다.');
 
-      newMotorcycleIIIDM.appendCanvasTo(canvasWrapperRef.current);
-      newMotorcycleIIIDM.onLoadProgressAction = progress => {
-        setLoadProgress(progress);
-        console.info('Page progress:', progress);
-      };
-      newMotorcycleIIIDM.onLoadCompleteAction = () => {
-        setIsLoaded(true);
-      };
-      newMotorcycleIIIDM.onHideTitleAction = opacityScore => {
-        setOpacityScore(opacityScore);
-      };
-      newMotorcycleIIIDM.setSectionAction = section => {
-        setSection(section);
-      };
-      newMotorcycleIIIDM.setSectionProgressAction = sectionProgress => {
-        setSectionProgress(sectionProgress);
-      };
-      newMotorcycleIIIDM.routeSectionTarget = motorcycleSection as ControlledSection;
+        newMotorcycleIIIDM.appendCanvasTo(canvasWrapperRef.current);
+        newMotorcycleIIIDM.onLoadProgressAction = progress => {
+          setLoadProgress(progress);
+          console.info('Page progress:', progress);
+        };
+        newMotorcycleIIIDM.onLoadCompleteAction = () => {
+          setIsLoaded(true);
+        };
+        newMotorcycleIIIDM.onHideTitleAction = opacityScore => {
+          setOpacityScore(opacityScore);
+        };
+        newMotorcycleIIIDM.setSectionAction = section => {
+          setSection(section);
+        };
+        newMotorcycleIIIDM.setSectionProgressAction = sectionProgress => {
+          setSectionProgress(sectionProgress);
+        };
+        newMotorcycleIIIDM.routeSectionTarget = motorcycleSection as ControlledSection;
 
-      newMotorcycleIIIDM.activate();
-      motorcycleIIIDMRef.current = newMotorcycleIIIDM;
-    } else {
-      motorcycleIIIDMRef.current.changePOVToTargetSection(targetSection as ControlledSection);
+        newMotorcycleIIIDM.activate();
+        motorcycleIIIDMRef.current = newMotorcycleIIIDM;
+      } else {
+        motorcycleIIIDMRef.current.changePOVToTargetSection(
+          targetSection ? (targetSection as ControlledSection) : 'spec'
+        );
+      }
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      enqueueSnackbar((error as any).message, {
+        variant: 'error',
+      });
+
+      throw error;
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 

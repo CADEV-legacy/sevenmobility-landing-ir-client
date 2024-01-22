@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Route, Routes } from 'react-router-dom';
 
-import { Provider } from '@/components';
+import { ErrorBoundaryFallback, Provider } from '@/components';
 import { PATH } from '@/constants';
 import { DefaultLayout } from '@/layouts';
 import { HomePage } from '@/pages';
@@ -10,11 +11,13 @@ function App() {
   return (
     <Provider>
       <Suspense>
-        <Routes>
-          <Route element={<DefaultLayout />}>
-            <Route path={PATH.home} element={<HomePage />} />
-          </Route>
-        </Routes>
+        <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+          <Routes>
+            <Route element={<DefaultLayout />}>
+              <Route path={PATH.home} element={<HomePage />} />
+            </Route>
+          </Routes>
+        </ErrorBoundary>
       </Suspense>
     </Provider>
   );

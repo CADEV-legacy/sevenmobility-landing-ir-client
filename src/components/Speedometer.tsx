@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Typography, styled } from '@mui/material';
+import { useSnackbar } from 'notistack';
 
 import * as S from './Speedometer.styles';
 
@@ -114,36 +115,86 @@ type SpeedometerSVGProps = {
 
 const SpeedometerSVG: React.FC<SpeedometerSVGProps> = ({ percentage }) => {
   const navigate = useNavigate();
+  const { section } = useIIIDMStore();
+  const { enqueueSnackbar } = useSnackbar();
 
   const onSpecPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[0]}`);
   };
 
   const onBatteryPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[1]}`);
   };
 
   const onBMSPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[2]}`);
   };
 
   const onMCUPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[3]}`);
   };
 
   const onElectricMotorPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[4]}`);
   };
 
   const onRegenerativeBrakingPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[5]}`);
   };
 
   const onUserReviewPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[6]}`);
   };
 
   const onDetailPolygonClick = () => {
+    if (section === 'loading') {
+      enqueueSnackbar('로딩 중에는 네비게이션을 이동할 수 없습니다.', { variant: 'error' });
+
+      return;
+    }
+
     navigate(`?section=${CONTROLLED_SECTIONS[7]}`);
   };
 
