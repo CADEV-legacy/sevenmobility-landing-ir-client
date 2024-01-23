@@ -7,7 +7,6 @@ import {
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   ShaderMaterial,
-  SpotLight,
   Vector2,
   Vector3,
 } from 'three';
@@ -30,6 +29,8 @@ type SetSectionAction = (section: ControlledSection) => void;
 
 type SetSectionProgressAction = (sectionProgress: number) => void;
 
+type SectionActivateAction = () => void;
+
 export class MotorcycleIIIDM extends IIIDM {
   private motorcycleVelocity = SECTION_DATA.loading.motorcycle.velocity.initialValue;
   private titleOpacityScore = 1;
@@ -41,6 +42,22 @@ export class MotorcycleIIIDM extends IIIDM {
   private _onHideTitleAction: OnHideTitleAction | null = null;
   private _setSectionAction: SetSectionAction | null = null;
   private _setSectionProgressAction: SetSectionProgressAction | null = null;
+  private _onSpecSectionActivateAction: SectionActivateAction | null = null;
+  private _onSpecSectionDeactivateAction: SectionActivateAction | null = null;
+  private _onBatterySectionActivateAction: SectionActivateAction | null = null;
+  private _onBatterySectionDeactivateAction: SectionActivateAction | null = null;
+  private _onBMSSectionActivateAction: SectionActivateAction | null = null;
+  private _onBMSSectionDeactivateAction: SectionActivateAction | null = null;
+  private _onMCUSectionActivateAction: SectionActivateAction | null = null;
+  private _onMCUSectionDeactivateAction: SectionActivateAction | null = null;
+  private _onElectricMotorSectionActivateAction: SectionActivateAction | null = null;
+  private _onElectricMotorSectionDeactivateAction: SectionActivateAction | null = null;
+  private _onRegenerativeBrakingSectionActivateAction: SectionActivateAction | null = null;
+  private _onRegenerativeBrakingSectionDeactivateAction: SectionActivateAction | null = null;
+  private _onUserReviewSectionActivateAction: SectionActivateAction | null = null;
+  private _onUserReviewSectionDeactivateAction: SectionActivateAction | null = null;
+  private _onDetailSectionActivateAction: SectionActivateAction | null = null;
+  private _onDetailSectionDeactivateAction: SectionActivateAction | null = null;
 
   /**
    * NOTE: At constructing
@@ -53,10 +70,37 @@ export class MotorcycleIIIDM extends IIIDM {
   constructor(core: IIIDMCore) {
     super(core);
 
+    this.frameManager.initialize();
+    this.controlManager.initialize();
+
     this.sectionController = new SectionController({
+      spec: {
+        activate: this.onSpecSectionActivate.bind(this),
+        deactivate: this.onSpecSectionDeactivate.bind(this),
+      },
       battery: {
         activate: this.onBatterySectionActivate.bind(this),
         deactivate: this.onBatterySectionDeactivate.bind(this),
+      },
+      bms: {
+        activate: this.onBMSSectionActivate.bind(this),
+        deactivate: this.onBMSSectionDeactivate.bind(this),
+      },
+      mcu: {
+        activate: this.onMCUSectionActivate.bind(this),
+        deactivate: this.onMCUSectionDeactivate.bind(this),
+      },
+      electricMotor: {
+        activate: this.onElectricMotorSectionActivate.bind(this),
+        deactivate: this.onElectricMotorSectionDeactivate.bind(this),
+      },
+      regenerativeBraking: {
+        activate: this.onRegenerativeBrakingSectionActivate.bind(this),
+        deactivate: this.onRegenerativeBrakingSectionDeactivate.bind(this),
+      },
+      userReview: {
+        activate: this.onUserReviewSectionActivate.bind(this),
+        deactivate: this.onUserReviewSectionDeactivate.bind(this),
       },
       detail: {
         activate: this.onDetailSectionActivate.bind(this),
@@ -64,7 +108,9 @@ export class MotorcycleIIIDM extends IIIDM {
       },
     });
 
-    this.activeScene.background = SECTION_DATA.loading.background.color;
+    this.activeScene.background = this.getHexColorCode(
+      SECTION_DATA.loading.background.colorCode.startCode
+    );
 
     const smoke = new Smoke(
       SECTION_DATA.loading.objectName.smoke,
@@ -76,14 +122,9 @@ export class MotorcycleIIIDM extends IIIDM {
     const groundMirror = new GroundMirror(
       this.canvas.clientWidth,
       this.canvas.clientHeight,
-      SECTION_DATA.loading.groundMirror.color,
+      this.getHexColorCode(SECTION_DATA.loading.groundMirror.colorCode.startCode),
       SECTION_DATA.loading.groundMirror.name
     );
-
-    this.frameManager.initialize();
-
-    // TODO: Remove this comment.
-    this.controlManager.initialize();
 
     this.activeCamera.position.add(SECTION_DATA.loading.camera.position);
     this.activeCamera.lookAt(this.activeCameraLookAt);
@@ -118,6 +159,71 @@ export class MotorcycleIIIDM extends IIIDM {
     this._routeSectionTarget = target;
   }
 
+  set onSpecSectionActivateAction(action: SectionActivateAction) {
+    this._onSpecSectionActivateAction = action;
+  }
+
+  set onSpecSectionDeactivateAction(action: SectionActivateAction) {
+    this._onSpecSectionDeactivateAction = action;
+  }
+
+  set onBatterySectionActivateAction(action: SectionActivateAction) {
+    this._onBatterySectionActivateAction = action;
+  }
+
+  set onBatterySectionDeactivateAction(action: SectionActivateAction) {
+    this._onBatterySectionDeactivateAction = action;
+  }
+
+  set onBMSSectionActivateAction(action: SectionActivateAction) {
+    this._onBMSSectionActivateAction = action;
+  }
+
+  set onBMSSectionDeactivateAction(action: SectionActivateAction) {
+    this._onBMSSectionDeactivateAction = action;
+  }
+
+  set onMCUSectionActivateAction(action: SectionActivateAction) {
+    this._onMCUSectionActivateAction = action;
+  }
+
+  set onMCUSectionDeactivateAction(action: SectionActivateAction) {
+    this._onMCUSectionDeactivateAction = action;
+  }
+
+  set onElectricMotorSectionActivateAction(action: SectionActivateAction) {
+    this._onElectricMotorSectionActivateAction = action;
+  }
+
+  set onElectricMotorSectionDeactivateAction(action: SectionActivateAction) {
+    this._onElectricMotorSectionDeactivateAction = action;
+  }
+
+  set onRegenerativeBrakingSectionActivateAction(action: SectionActivateAction) {
+    this._onRegenerativeBrakingSectionActivateAction = action;
+  }
+
+  set onRegenerativeBrakingSectionDeactivateAction(action: SectionActivateAction) {
+    this._onRegenerativeBrakingSectionDeactivateAction = action;
+  }
+
+  set onUserReviewSectionActivateAction(action: SectionActivateAction) {
+    this._onUserReviewSectionActivateAction = action;
+  }
+
+  set onUserReviewSectionDeactivateAction(action: SectionActivateAction) {
+    this._onUserReviewSectionDeactivateAction = action;
+  }
+
+  set onDetailSectionActivateAction(action: SectionActivateAction) {
+    this._onDetailSectionActivateAction = action;
+  }
+
+  set onDetailSectionDeactivateAction(action: SectionActivateAction) {
+    this._onDetailSectionDeactivateAction = action;
+  }
+
+  // NOTE: Loading Section.
   private async loadMotorcycle() {
     try {
       const [motorcycleModel, batteryModel, mcuModel] = await Promise.all(
@@ -175,21 +281,6 @@ export class MotorcycleIIIDM extends IIIDM {
   }
 
   private showMotorcycle() {
-    this.activeScene.traverse(object => {
-      if (
-        object instanceof Mesh &&
-        object.isMesh &&
-        object.name === SECTION_DATA.loading.motorcycle.headLight.key &&
-        object.material instanceof MeshStandardMaterial &&
-        object.material.isMaterial &&
-        object.material.name === `${SECTION_DATA.loading.motorcycle.headLight.key}_material`
-      ) {
-        object.material.emissive = SECTION_DATA.loading.motorcycle.headLight.emissiveColor;
-        object.material.emissiveIntensity =
-          SECTION_DATA.loading.motorcycle.headLight.emissiveIntensity;
-      }
-    });
-
     const directionalLight = new DirectionalLight(
       SECTION_DATA.loading.directionalLight.color,
       SECTION_DATA.loading.directionalLight.intensity
@@ -237,7 +328,7 @@ export class MotorcycleIIIDM extends IIIDM {
     });
   }
 
-  private startTheEngine() {
+  private async startTheEngine() {
     const bloomLayer = new Layers();
 
     bloomLayer.set(SECTION_DATA.loading.bloomEffect.layerDepth);
@@ -251,6 +342,7 @@ export class MotorcycleIIIDM extends IIIDM {
         object.material.isMaterial &&
         object.material.name === `${SECTION_DATA.loading.motorcycle.headLight.key}_material`
       ) {
+        object.material.emissive = SECTION_DATA.loading.motorcycle.headLight.emissiveColor;
         object.material.color = SECTION_DATA.loading.motorcycle.headLight.emissiveColor;
         object.material.emissiveIntensity =
           SECTION_DATA.loading.motorcycle.headLight.changedEmissiveIntensity;
@@ -311,9 +403,42 @@ export class MotorcycleIIIDM extends IIIDM {
 
     finalEffectComposer.render();
 
-    this.renderer.autoClear = true;
+    return new Promise<void>(resolve => {
+      this.frameManager.customRender = () => {
+        this.renderer.clear();
+
+        this.activeCamera.layers.set(SECTION_DATA.loading.bloomEffect.layerDepth);
+
+        bloomEffectComposer.render();
+
+        this.renderer.clearDepth();
+
+        this.activeCamera.layers.set(0);
+
+        finalEffectComposer.render();
+      };
+
+      const declineEngineLight = () => {
+        bloomPass.strength -= 0.03;
+
+        if (bloomPass.strength <= 0) {
+          this.frameManager.removeFrameUpdateAction(declineEngineLight.name);
+          this.frameManager.customRender = null;
+          this.renderer.autoClear = true;
+
+          return resolve();
+        }
+      };
+
+      this.frameManager.addFrameUpdateAction({
+        name: declineEngineLight.name,
+        action: declineEngineLight.bind(this),
+      });
+      this.frameManager.activate();
+    });
   }
 
+  // NOTE: Common Section.
   // NOTE: Move camera POV from active to prev controlled section.
   private moveCameraPOVToPrev() {
     const {
@@ -332,7 +457,6 @@ export class MotorcycleIIIDM extends IIIDM {
       throw this.logWorker.error('setSectionProgressAction is must set.');
 
     if (!prevControlledSection && nextControlledSection) {
-      this.logWorker.info('Section is Spec.');
       const aForthTotalCameraXPosition =
         Math.abs(
           SECTION_DATA[nextControlledSection].camera.position.x -
@@ -345,7 +469,10 @@ export class MotorcycleIIIDM extends IIIDM {
 
       if (leftCameraXPosition >= aForthTotalCameraXPosition * 3) {
         controlledSectionInfo[nextControlledSection].activate?.();
-      } else if (leftCameraXPosition < aForthTotalCameraXPosition * 3 && leftCameraXPosition >= 0) {
+      } else if (
+        leftCameraXPosition < aForthTotalCameraXPosition * 3 &&
+        leftCameraXPosition >= aForthTotalCameraXPosition
+      ) {
         controlledSectionInfo[nextControlledSection].deactivate?.();
       } else {
         controlledSectionInfo[activeControlledSection].activate?.();
@@ -575,77 +702,7 @@ export class MotorcycleIIIDM extends IIIDM {
     }
   }
 
-  private removeDirectionalLight() {
-    this.removeObjectsFromScene(false, SECTION_DATA.loading.objectName.directionalLight);
-  }
-
-  private turnOnTheLight() {
-    // this.activeScene.background = null;
-
-    const directionalLightA = new DirectionalLight(0xffffff, 1.5);
-    directionalLightA.position.set(5, 5, 5);
-    directionalLightA.name = 'directionalLightA';
-    const directionalLightB = new DirectionalLight(0xffffff, 1.5);
-    directionalLightB.position.set(-5, 5, 5);
-    directionalLightB.name = 'directionalLightB';
-    const directionalLightC = new DirectionalLight(0xffffff, 1.5);
-    directionalLightC.position.set(5, -5, 5);
-    directionalLightC.name = 'directionalLightC';
-    const directionalLightD = new DirectionalLight(0xffffff, 1.5);
-    directionalLightD.position.set(-5, -5, 5);
-    directionalLightD.name = 'directionalLightD';
-
-    const ambientLight = new AmbientLight(0xffffff, 1);
-
-    this.activeScene.traverse(object => {
-      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
-        object.add(ambientLight);
-      }
-    });
-
-    const spotLight = new SpotLight(SECTION_DATA.spec.spotLight.color, 150);
-    spotLight.position.set(
-      SECTION_DATA.spec.spotLight.position.x,
-      SECTION_DATA.spec.spotLight.position.y,
-      SECTION_DATA.spec.spotLight.position.z
-    );
-    spotLight.angle = Math.PI / 16;
-    spotLight.penumbra = 0;
-    spotLight.castShadow = true;
-    spotLight.name = SECTION_DATA.spec.objectName.spotLight;
-
-    this.addObjectsToScene(
-      true,
-      directionalLightA,
-      directionalLightB,
-      directionalLightC,
-      directionalLightD
-    );
-  }
-
-  // NOTE: Change POV to intro section.
-  private changePOVToSpecSection() {
-    return new Promise<void>(resolve => {
-      const moveCameraToSpecSection = () => {
-        const { activeControlledSection } = this.sectionController;
-
-        if (activeControlledSection === 'spec') {
-          this.frameManager.removeFrameUpdateAction(moveCameraToSpecSection.name);
-
-          return resolve();
-        }
-
-        this.moveCameraPOVToNext();
-      };
-
-      this.frameManager.addFrameUpdateAction({
-        name: moveCameraToSpecSection.name,
-        action: moveCameraToSpecSection.bind(this),
-      });
-      this.frameManager.activate();
-    });
-  }
-
+  // NOTE: Move camera POV to target section.
   changePOVToTargetSection(targetSection: ControlledSection) {
     const {
       activeControlledSection,
@@ -786,6 +843,367 @@ export class MotorcycleIIIDM extends IIIDM {
     this.frameManager.activate();
   }
 
+  // NOTE: Spec Section.
+  private turnOnStage() {
+    return new Promise<void>(resolve => {
+      const directionalLightA = new DirectionalLight(0xffffff, 0);
+      directionalLightA.position.set(5, 5, 5);
+      directionalLightA.name = 'directionalLightA';
+      const directionalLightB = new DirectionalLight(0xffffff, 0);
+      directionalLightB.position.set(-5, 5, 5);
+      directionalLightB.name = 'directionalLightB';
+      const directionalLightC = new DirectionalLight(0xffffff, 0);
+      directionalLightC.position.set(5, -5, 5);
+      directionalLightC.name = 'directionalLightC';
+      const directionalLightD = new DirectionalLight(0xffffff, 0);
+      directionalLightD.position.set(-5, -5, 5);
+      directionalLightD.name = 'directionalLightD';
+
+      const ambientLight = new AmbientLight(0xffffff, 1);
+
+      this.activeScene.traverse(object => {
+        if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+          object.add(ambientLight);
+        }
+      });
+
+      this.addObjectsToScene(
+        false,
+        directionalLightA,
+        directionalLightB,
+        directionalLightC,
+        directionalLightD
+      );
+
+      const turnOnTheLight = () => {
+        this.activeScene.traverse(object => {
+          if (object instanceof DirectionalLight) {
+            if (object.name === SECTION_DATA.loading.objectName.directionalLight) {
+              if (object.intensity >= 0) {
+                object.intensity -= 0.2;
+              }
+            }
+
+            if (
+              object.name === 'directionalLightA' ||
+              object.name === 'directionalLightB' ||
+              object.name === 'directionalLightC' ||
+              object.name === 'directionalLightD'
+            ) {
+              if (object.intensity <= 1.5) {
+                object.intensity += 0.2;
+              } else {
+                this.frameManager.removeFrameUpdateAction(turnOnTheLight.name);
+
+                return resolve();
+              }
+            }
+          }
+        });
+      };
+
+      this.frameManager.addFrameUpdateAction({
+        name: turnOnTheLight.name,
+        action: turnOnTheLight.bind(this),
+      });
+      this.frameManager.activate();
+    });
+  }
+
+  private turnOnColor() {
+    return new Promise<void>(resolve => {
+      const backgroundColorDiff =
+        SECTION_DATA.loading.background.colorCode.endCode -
+        SECTION_DATA.loading.background.colorCode.startCode;
+      const groundMirrorColorDiff =
+        SECTION_DATA.loading.groundMirror.colorCode.endCode -
+        SECTION_DATA.loading.groundMirror.colorCode.startCode;
+      const colorDiff =
+        backgroundColorDiff >= groundMirrorColorDiff ? backgroundColorDiff : groundMirrorColorDiff;
+
+      const groundMirrorObject = this.activeScene.getObjectByName(
+        SECTION_DATA.loading.objectName.groundMirror
+      );
+
+      if (!groundMirrorObject) throw this.logWorker.error('Ground mirror object is not found.');
+
+      let colorAddCount = 1;
+
+      const addColor = () => {
+        if (colorAddCount <= colorDiff) {
+          const backgroundColorCode =
+            SECTION_DATA.loading.background.colorCode.startCode + colorAddCount;
+          const groundMirrorColorCode =
+            SECTION_DATA.loading.groundMirror.colorCode.startCode + colorAddCount;
+
+          if (backgroundColorCode <= SECTION_DATA.loading.background.colorCode.endCode) {
+            this.activeScene.background = this.getHexColorCode(backgroundColorCode);
+          }
+
+          if (groundMirrorColorCode <= SECTION_DATA.loading.groundMirror.colorCode.endCode) {
+            if (groundMirrorObject instanceof Mesh && groundMirrorObject.isMesh) {
+              groundMirrorObject.material.color = this.getHexColorCode(groundMirrorColorCode);
+            }
+          }
+
+          colorAddCount += 1;
+        } else {
+          this.frameManager.removeFrameUpdateAction(addColor.name);
+
+          return resolve();
+        }
+      };
+
+      this.frameManager.addFrameUpdateAction({
+        name: addColor.name,
+        action: addColor.bind(this),
+      });
+    });
+  }
+
+  private changePOVToSpecSection() {
+    return new Promise<void>(resolve => {
+      const moveCameraToSpecSection = () => {
+        const { activeControlledSection } = this.sectionController;
+
+        if (activeControlledSection === 'spec') {
+          this.frameManager.removeFrameUpdateAction(moveCameraToSpecSection.name);
+
+          return resolve();
+        }
+
+        this.moveCameraPOVToNext();
+      };
+
+      this.frameManager.addFrameUpdateAction({
+        name: moveCameraToSpecSection.name,
+        action: moveCameraToSpecSection.bind(this),
+      });
+      this.frameManager.activate();
+    });
+  }
+
+  private onSpecSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.spec.isActive) return;
+
+    this._onSpecSectionActivateAction?.();
+
+    controlledSectionInfo.spec.isActive = true;
+  }
+
+  private onSpecSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.spec.isActive) return;
+
+    this._onSpecSectionDeactivateAction?.();
+
+    controlledSectionInfo.spec.isActive = false;
+  }
+
+  // NOTE: Battery Section.
+  private onBatterySectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.battery.isActive) return;
+
+    this.activeScene.traverse(object => {
+      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+        object.children
+          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
+          .map(child =>
+            child.traverse(grandChild => {
+              if (
+                grandChild instanceof Mesh &&
+                grandChild.isMesh &&
+                (grandChild.material instanceof MeshStandardMaterial ||
+                  grandChild.material instanceof MeshPhysicalMaterial)
+              ) {
+                grandChild.material.wireframe = true;
+              }
+            })
+          );
+      }
+    });
+
+    this._onBatterySectionActivateAction?.();
+
+    controlledSectionInfo.battery.isActive = true;
+  }
+
+  private onBatterySectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.battery.isActive) return;
+
+    this.activeScene.traverse(object => {
+      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+        object.children
+          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
+          .map(child =>
+            child.traverse(grandChild => {
+              if (
+                grandChild instanceof Mesh &&
+                grandChild.isMesh &&
+                (grandChild.material instanceof MeshStandardMaterial ||
+                  grandChild.material instanceof MeshPhysicalMaterial)
+              ) {
+                grandChild.material.wireframe = false;
+              }
+            })
+          );
+      }
+    });
+
+    this._onBatterySectionDeactivateAction?.();
+
+    controlledSectionInfo.battery.isActive = false;
+  }
+
+  // NOTE: BMS Section.
+  private onBMSSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.bms.isActive) return;
+
+    this._onBMSSectionActivateAction?.();
+
+    controlledSectionInfo.bms.isActive = true;
+  }
+
+  private onBMSSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.bms.isActive) return;
+
+    this._onBMSSectionDeactivateAction?.();
+
+    controlledSectionInfo.bms.isActive = false;
+  }
+
+  // NOTE: MCU Section.
+  private onMCUSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.mcu.isActive) return;
+
+    this._onMCUSectionActivateAction?.();
+
+    controlledSectionInfo.mcu.isActive = true;
+  }
+
+  private onMCUSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.mcu.isActive) return;
+
+    this._onMCUSectionDeactivateAction?.();
+
+    controlledSectionInfo.mcu.isActive = false;
+  }
+
+  // NOTE: Electric Motor Section.
+  private onElectricMotorSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.electricMotor.isActive) return;
+
+    this._onElectricMotorSectionActivateAction?.();
+
+    controlledSectionInfo.electricMotor.isActive = true;
+  }
+
+  private onElectricMotorSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.electricMotor.isActive) return;
+
+    this._onElectricMotorSectionDeactivateAction?.();
+
+    controlledSectionInfo.electricMotor.isActive = false;
+  }
+
+  // NOTE: Regenerative Braking Section.
+  private onRegenerativeBrakingSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.regenerativeBraking.isActive) return;
+
+    this._onRegenerativeBrakingSectionActivateAction;
+
+    controlledSectionInfo.regenerativeBraking.isActive = true;
+  }
+
+  private onRegenerativeBrakingSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.regenerativeBraking.isActive) return;
+
+    this._onRegenerativeBrakingSectionDeactivateAction?.();
+
+    controlledSectionInfo.regenerativeBraking.isActive = false;
+  }
+
+  // NOTE: User Review Section.
+  private onUserReviewSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.userReview.isActive) return;
+
+    this._onUserReviewSectionActivateAction;
+
+    controlledSectionInfo.userReview.isActive = true;
+  }
+
+  private onUserReviewSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.userReview.isActive) return;
+
+    this._onUserReviewSectionDeactivateAction?.();
+
+    controlledSectionInfo.userReview.isActive = false;
+  }
+
+  // NOTE: Detail Section.
+  private onDetailSectionActivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (controlledSectionInfo.detail.isActive) return;
+
+    this.controlManager.activate();
+    this.controlManager.orbitControl.target = this.activeCameraLookAt;
+    this.controlManager.orbitControl.enableZoom = false;
+    this.controlManager.orbitControl.update();
+    this.controlManager.orbitControl.addEventListener('change', this.render.bind(this));
+
+    this._onDetailSectionActivateAction?.();
+
+    controlledSectionInfo.detail.isActive = true;
+  }
+
+  private onDetailSectionDeactivate() {
+    const { controlledSectionInfo } = this.sectionController;
+
+    if (!controlledSectionInfo.detail.isActive) return;
+
+    this.controlManager.orbitControl.removeEventListener('change', this.render.bind(this));
+    this.controlManager.deactivate();
+
+    this._onDetailSectionDeactivateAction?.();
+
+    controlledSectionInfo.detail.isActive = false;
+  }
+
+  // NOTE: Common Utils.
+  private getHexColorCode(colorCode: number) {
+    const convertedColorCode = colorCode < 10 ? `0${colorCode}` : `${colorCode}`;
+
+    return new Color(`#${convertedColorCode}${convertedColorCode}${convertedColorCode}`);
+  }
+
   resize() {
     this.onResize();
 
@@ -880,84 +1298,6 @@ export class MotorcycleIIIDM extends IIIDM {
     }
   }
 
-  private onBatterySectionActivate() {
-    const { controlledSectionInfo } = this.sectionController;
-
-    if (controlledSectionInfo.battery.isActive) return;
-
-    this.activeScene.traverse(object => {
-      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
-        object.children
-          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
-          .map(child =>
-            child.traverse(grandChild => {
-              if (
-                grandChild instanceof Mesh &&
-                grandChild.isMesh &&
-                (grandChild.material instanceof MeshStandardMaterial ||
-                  grandChild.material instanceof MeshPhysicalMaterial)
-              ) {
-                grandChild.material.wireframe = true;
-              }
-            })
-          );
-      }
-    });
-
-    controlledSectionInfo.battery.isActive = true;
-  }
-
-  private onBatterySectionDeactivate() {
-    const { controlledSectionInfo } = this.sectionController;
-
-    if (!controlledSectionInfo.battery.isActive) return;
-
-    this.activeScene.traverse(object => {
-      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
-        object.children
-          .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
-          .map(child =>
-            child.traverse(grandChild => {
-              if (
-                grandChild instanceof Mesh &&
-                grandChild.isMesh &&
-                (grandChild.material instanceof MeshStandardMaterial ||
-                  grandChild.material instanceof MeshPhysicalMaterial)
-              ) {
-                grandChild.material.wireframe = false;
-              }
-            })
-          );
-      }
-    });
-
-    controlledSectionInfo.battery.isActive = false;
-  }
-
-  private onDetailSectionActivate() {
-    const { controlledSectionInfo } = this.sectionController;
-
-    if (controlledSectionInfo.detail.isActive) return;
-
-    this.controlManager.activate();
-    this.controlManager.orbitControl.target = this.activeCameraLookAt;
-    this.controlManager.orbitControl.update();
-    this.controlManager.orbitControl.addEventListener('change', this.render.bind(this));
-
-    controlledSectionInfo.detail.isActive = true;
-  }
-
-  private onDetailSectionDeactivate() {
-    const { controlledSectionInfo } = this.sectionController;
-
-    if (!controlledSectionInfo.detail.isActive) return;
-
-    this.controlManager.deactivate();
-    this.controlManager.orbitControl.removeEventListener('change', this.render.bind(this));
-
-    controlledSectionInfo.detail.isActive = false;
-  }
-
   private focusToBattery() {
     const batteryModel = this.activeScene.getObjectByName('batteryModel');
 
@@ -996,11 +1336,10 @@ export class MotorcycleIIIDM extends IIIDM {
 
     await this.closerMotorcycle();
 
-    this.startTheEngine();
+    await this.startTheEngine();
 
     setTimeout(async () => {
-      this.removeDirectionalLight();
-      this.turnOnTheLight();
+      await Promise.all([this.turnOnStage(), this.turnOnColor()]);
       await this.changePOVToSpecSection();
 
       if (this._routeSectionTarget) {

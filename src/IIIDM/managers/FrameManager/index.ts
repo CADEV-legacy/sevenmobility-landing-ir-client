@@ -18,6 +18,8 @@ const DEFAULT_FRAME_PER_SECOND = FRAME_PER_SECOND[30];
 
 type FrameUpdateAction = () => void;
 
+type CustomRender = () => void;
+
 type TaskedFrameUpdateAction = {
   name: string;
   action: FrameUpdateAction;
@@ -32,6 +34,7 @@ export class FrameManager extends IIIDMManager {
   private interval: number = 1 / DEFAULT_FRAME_PER_SECOND;
   private requestAnimationFrameId: number | null = null;
   private taskedFrameUpdateActions: TaskedFrameUpdateAction[] = [];
+  private _customRender: CustomRender | null = null;
   private _clock: Clock = new Clock();
   private _fps: FramePerSecond = DEFAULT_FRAME_PER_SECOND;
 
@@ -58,6 +61,10 @@ export class FrameManager extends IIIDMManager {
 
   get clock() {
     return this._clock;
+  }
+
+  set customRender(renderFunction: CustomRender | null) {
+    this._customRender = renderFunction;
   }
 
   /** NOTE: If already same function has added, other functions will be added. */
@@ -155,7 +162,11 @@ export class FrameManager extends IIIDMManager {
       taskedFrameUpdateAction.action()
     );
 
-    this.maker.render();
+    if (typeof this._customRender === 'function') {
+      this._customRender();
+    } else {
+      this.maker.render();
+    }
 
     this.logWorker.info(`[Tick] [FPS]:: ${this._fps}`);
 

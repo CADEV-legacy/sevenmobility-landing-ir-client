@@ -4,6 +4,7 @@ export const Container = styled('section')({
   position: 'relative',
   width: '100%',
   height: '100%',
+  overflow: 'hidden',
 });
 
 export const CanvasWrapper = styled('div')({
@@ -52,3 +53,11 @@ export const Title = styled('div')<{ opacityScore: number }>(({ opacityScore }) 
   boxSizing: 'border-box',
   opacity: opacityScore,
 }));
+
+export const FloatingSpeedmeterContainer = styled('div')({
+  position: 'fixed',
+  zIndex: 2,
+  right: '2rem',
+  bottom: '2rem',
+  width: '20rem',
+});

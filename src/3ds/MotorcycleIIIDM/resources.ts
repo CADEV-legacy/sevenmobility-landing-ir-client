@@ -8,7 +8,10 @@ const LOADING_SECTION_DATA = {
     groundMirror: 'groundMirror',
   },
   background: {
-    color: new Color(0x000000),
+    colorCode: {
+      startCode: 0,
+      endCode: 22,
+    },
   },
   camera: {
     position: new Vector3(-4, 1.5, 0),
@@ -16,10 +19,10 @@ const LOADING_SECTION_DATA = {
   },
   directionalLight: {
     color: new Color(0xffffff),
-    intensity: 0.1,
+    intensity: 0.2,
     maxIntensity: 2,
-    position: new Vector3(-4, 1.5, 0),
-    targetPosition: new Vector3(0, 1, 0),
+    position: new Vector3(-3, 3, 3),
+    targetPosition: new Vector3(-1, 1, 0),
   },
   motorcycle: {
     paths: ['/3ds/models/motorcycle.glb', '/3ds/models/battery.glb', '/3ds/models/mcu.glb'],
@@ -74,7 +77,10 @@ const LOADING_SECTION_DATA = {
     },
   },
   groundMirror: {
-    color: new Color(0xffffff),
+    colorCode: {
+      startCode: 52,
+      endCode: 99,
+    },
     name: 'groundMirror',
   },
   title: {
@@ -166,8 +172,8 @@ const USER_REVIEW_SECTION_DATA = {
 const DETAIL_SECTION_DATA = {
   objectName: {},
   camera: {
-    position: new Vector3(-4, 2, 4),
-    lookAt: new Vector3(0, 0, 0),
+    position: new Vector3(-4, 2.5, 4),
+    lookAt: new Vector3(0, -0.5, 0),
     changeCount: 200,
     targetChangeCount: 100,
   },

@@ -36,12 +36,14 @@ export const ErrorMessageContainer = styled('div')({
   justifyContent: 'center',
   width: '40rem',
   height: '50rem',
+  padding: '3rem 2rem',
+  boxSizing: 'border-box',
   borderRadius: '.5rem',
   border: `.125rem solid ${COLOR.white}`,
 });
 
 export const ErrorResetButton = styled(Button)({
-  width: '80%',
+  width: '100%',
   height: '3rem',
   backgroundColor: COLOR.white,
   color: COLOR.black,

@@ -5,7 +5,7 @@ import { useSnackbar } from 'notistack';
 import * as S from './DefaultLayout.styles';
 
 import logoImage from '@/assets/images/logo.png';
-import { SWImage, Speedometer } from '@/components';
+import { SWImage } from '@/components';
 import { PATH } from '@/constants';
 import { useIIIDMStore } from '@/stores';
 
@@ -31,9 +31,6 @@ const DefaultLayout: React.FC = () => {
           <SWImage alt='nav-logo' src={logoImage} />
         </S.Logo>
       </S.DefaultLayoutHeader>
-      <S.DefaultLayoutFloatingSpeedometerContainer>
-        <Speedometer />
-      </S.DefaultLayoutFloatingSpeedometerContainer>
       <Outlet />
     </S.DefaultLayoutContainer>
   );
