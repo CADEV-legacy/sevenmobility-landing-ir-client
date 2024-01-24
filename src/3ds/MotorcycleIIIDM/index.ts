@@ -1131,7 +1131,7 @@ export class MotorcycleIIIDM extends IIIDM {
 
     if (controlledSectionInfo.regenerativeBraking.isActive) return;
 
-    this._onRegenerativeBrakingSectionActivateAction;
+    this._onRegenerativeBrakingSectionActivateAction?.();
 
     controlledSectionInfo.regenerativeBraking.isActive = true;
   }
@@ -1152,7 +1152,7 @@ export class MotorcycleIIIDM extends IIIDM {
 
     if (controlledSectionInfo.userReview.isActive) return;
 
-    this._onUserReviewSectionActivateAction;
+    this._onUserReviewSectionActivateAction?.();
 
     controlledSectionInfo.userReview.isActive = true;
   }
