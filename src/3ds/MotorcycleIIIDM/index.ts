@@ -269,7 +269,6 @@ export class MotorcycleIIIDM extends IIIDM {
 
       this.motorcycleModel = motorcycleModel.scene;
 
-      console.info('motorcycleModel', motorcycleModel);
       this.animationManager.initialize(this.motorcycleModel, this.motorcycleModel.animations[0]);
 
       this.addObjectsToScene(true, motorcycleModel.scene);
@@ -975,8 +974,6 @@ export class MotorcycleIIIDM extends IIIDM {
   }
 
   private unshowBattery() {
-    console.info('Unshow Battery');
-    console.info(this.batteryModel);
     this.removeObjectsFromScene(true, SECTION_DATA.loading.objectName.batteryModelSolo);
   }
 
