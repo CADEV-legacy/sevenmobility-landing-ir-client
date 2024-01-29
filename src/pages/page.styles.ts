@@ -30,6 +30,7 @@ export const LoadProgressText = styled('div')({
   fontSize: '3rem',
   fontWeight: 700,
   color: '#FFFFFF',
+  textAlign: 'center',
 });
 
 export const Overlay = styled('div')<{ isLoaded: boolean }>(({ isLoaded }) => ({
@@ -91,7 +92,7 @@ export const FloatingBatteryTitleKRContainer = styled('div')({
 
 export const FloatingBatteryDescriptionContainer = styled('div')({
   display: 'flex',
-  width: '68rem',
+  width: '78rem',
   flexDirection: 'column',
   gap: '2rem',
   overflow: 'hidden',

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { Typography } from '@mui/material';
@@ -22,6 +23,7 @@ import { COLOR } from '@/constants';
 import { useIIIDMStore, useMCUModeStore } from '@/stores';
 
 const Page: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { section, getMotorcycleIIIDM, setSection, setSectionProgress } = useIIIDMStore();
   const { mode } = useMCUModeStore();
@@ -60,13 +62,13 @@ const Page: React.FC = () => {
       if (!canvasWrapperRef.current) throw new Error('캔버스가 아직 준비되지 않았습니다.');
 
       if (targetSection && !CONTROLLED_SECTIONS.includes(targetSection as ControlledSection))
-        throw new Error('불가능한 섹션이 입력되었습니다.');
+        throw new Error(t('error.impossible_section_entered'));
 
       if (!motorcycleIIIDMRef.current) {
         const newMotorcycleIIIDM = getMotorcycleIIIDM();
         const motorcycleSection = searchParams.get('section');
 
-        if (!newMotorcycleIIIDM) throw new Error('오토바이 모델을 불러오는데 실패했습니다.');
+        if (!newMotorcycleIIIDM) throw new Error(t('error.failed_to_load_the_motorcycle_model'));
 
         newMotorcycleIIIDM.appendCanvasTo(canvasWrapperRef.current);
         newMotorcycleIIIDM.onLoadProgressAction = progress => {
@@ -183,9 +185,11 @@ const Page: React.FC = () => {
       {isLoaded && section === 'loading' && (
         <S.Overlay isLoaded={isLoaded}>
           <S.Title opacityScore={opacityScore}>
-            우리는 지속 가능한 미래 모빌리티를 만듭니다.
+            {t('title.we_are_creating_a_sustainable_future_for_mobility')}
           </S.Title>
-          <S.Title opacityScore={opacityScore}>새로움과 혁신을 담다, 세븐모빌리티</S.Title>
+          <S.Title opacityScore={opacityScore}>
+            {t('title.innovation_and_novelty_encapsulated_seven_mobility')}
+          </S.Title>
         </S.Overlay>
       )}
       {/* Speedometer */}
@@ -215,13 +219,13 @@ const Page: React.FC = () => {
             SM1
           </Typography>
           <Typography variant='h1' sx={{ fontSize: '1.5rem' }}>
-            주행 거리 <strong style={{ fontSize: '2rem' }}>158km</strong>
+            {t('section_spec.driving_distance')} <strong style={{ fontSize: '2rem' }}>158km</strong>
           </Typography>
           <Typography variant='h1' sx={{ fontSize: '1.5rem' }}>
-            최고 속도 <strong style={{ fontSize: '2rem' }}>100km/h</strong>
+            {t('section_spec.maximum_speed')} <strong style={{ fontSize: '2rem' }}>100km/h</strong>
           </Typography>
           <Typography variant='h1' sx={{ fontSize: '1.5rem' }}>
-            모터 출력 <strong style={{ fontSize: '2rem' }}>7kW</strong>
+            {t('section_spec.motor_output')} <strong style={{ fontSize: '2rem' }}>7kW</strong>
           </Typography>
         </S.FloatingSpecDescriptionContainer>
       </FloatingContent>
@@ -245,17 +249,17 @@ const Page: React.FC = () => {
           <S.BatteryDescriptionKeywordFlexContainer>
             <S.BatteryDescriptionKeyWord color={COLOR.grayScale10}>
               <Typography variant='h3' fontWeight='bold'>
-                충 전 시 간
+                {t('section_battery.charing_time')}
               </Typography>
             </S.BatteryDescriptionKeyWord>
             <S.BatteryDescriptionKeyWord color={COLOR.grayScale40}>
               <Typography variant='h3' fontWeight='bold'>
-                주 행 거 리
+                {t('section_battery.driving_distance')}
               </Typography>
             </S.BatteryDescriptionKeyWord>
             <S.BatteryDescriptionKeyWord color={COLOR.grayScale60}>
               <Typography variant='h3' fontWeight='bold'>
-                편 리 성
+                {t('section_battery.convenience')}
               </Typography>
             </S.BatteryDescriptionKeyWord>
           </S.BatteryDescriptionKeywordFlexContainer>
@@ -265,13 +269,15 @@ const Page: React.FC = () => {
                 variant='h2'
                 fontWeight='bold'
                 sx={{ marginBottom: '3rem', fontSize: '3rem' }}>
-                초고속 충전
+                {t('section_battery.ultra_fast_charging')}
               </Typography>
               <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '1.5rem' }}>
-                30분 만에 100% 충전 가능, 스테이션 불필요.
+                {t('section_battery.30_minutes_to_fully_charge_no_need_for_a_station')}
               </Typography>
               <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '1.5rem' }}>
-                고압 충전 시 발열 문제를 해결하여 안전성 증가.
+                {t(
+                  'section_battery.solving_heat_issues_during_high_voltage_charging_enhances_safety'
+                )}
               </Typography>
             </S.DescriptionPart>
             <S.DescriptionPart>
@@ -279,19 +285,21 @@ const Page: React.FC = () => {
                 variant='h2'
                 fontWeight='bold'
                 sx={{ marginBottom: '3rem', fontSize: '3rem' }}>
-                압도적인 주행 거리
+                {t('section_battery.overwhelming_driving_range')}
               </Typography>
               <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '0.5rem' }}>
-                1회 충전시 주행 거리 104km
+                {t('section_battery.the_driving_range_on_a_single_charge_is_104km')}
               </Typography>
               <Typography variant='h5' sx={{ marginBottom: '1.5rem' }}>
-                환경부 시험방법 기준 (CSV-40)
+                {t('section_battery.environmental_ministry_testing_method_standards_CSV_40')}
               </Typography>
               <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '0.5rem' }}>
-                72V / 60Ah 배터리로 60km 정속 주행 시 158km 주행 가능
+                {t(
+                  'section_battery.with_a_72V_60Ah_battery_a_constant_speed_of_60km_h_allows_for_a_range_of_158km'
+                )}
               </Typography>
               <Typography variant='h5' sx={{ marginBottom: '1.5rem' }}>
-                자체 테스트 결과
+                {t('section_battery.internal_test_results')}
               </Typography>
             </S.DescriptionPart>
           </S.DescriptionFlexContainer>
@@ -317,19 +325,25 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            자체 설계로 직병렬 호환 가능 (특허 진행 중)
+            {t(
+              'section_bms.compatible_with_direct_parallel_connection_through_in_house_design_patent_pending'
+            )}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            1M 배터리와 분리 장착해도 통신 장애없이 설계 (세계 최초, 특허 진행 중)
+            {t(
+              'section_bms.designed_to_allow_separate_installation_of_a_1M_battery_without_communication_issues_worlds_first_patent_pending'
+            )}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            배터리와 분리되게 설계하여 안전성 확보. 1M이상 분리 가능.
+            {t(
+              'section_bms.designed_for_separate_installation_of_the_battery_to_ensure_safety_can_be_separated_from_1M_and_above'
+            )}
           </Typography>
         </S.FloatingBMSContentContainer>
       </FloatingContent>
@@ -365,25 +379,29 @@ const Page: React.FC = () => {
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
-                BASIC
+                {t('section_mcu.basic')}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                일상생활 또는 출퇴근용에 맞는 세팅 속도, 힘(등판력)
+                {t(
+                  'section_mcu.settings_for_daily_life_or_commuting_including_speed_and_power_uphill_force'
+                )}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                에너지 효율을 기본으로 적당한 속도와 힘
+                {t(
+                  'section_mcu.efficient_energy_utilization_combined_with_appropriate_speed_and_output'
+                )}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                주행거리 모두 최적화한 모드
+                {t('section_mcu.a_mode_optimized_for_overall_driving_range_based_on_these_factors')}
               </Typography>
             </>
           )}
@@ -393,25 +411,25 @@ const Page: React.FC = () => {
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
-                DELIVERY
+                {t('section_mcu.delivery')}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                생계형 사용자 세팅
+                {t('section_mcu.livelihood_oriented_user_settings')}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                에너지효율을 최고치로 끌어올려
+                {t('section_mcu.raise_energy_efficiency_to_the_maximum')}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                최대한 충전횟수를 줄이고 오래 탈 수 있다.
+                {t('section_mcu.minimize_charging_cycles_and_enable_longer_usage')}
               </Typography>
             </>
           )}
@@ -421,30 +439,26 @@ const Page: React.FC = () => {
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
-                TOURING
+                {t('section_mcu.touring')}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                투어링을 즐기는 사용자 세팅
+                {t('section_mcu.user_settings_for_enjoying_touring')}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                모터의 힘을 최대로 끌어올려
+                {t('section_mcu.amplify_the_power_of_the_motor_to_the_maximum')}
               </Typography>
               <Typography
                 variant='h2'
                 fontWeight='bold'
                 sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-                고속주행을 원하는 사용자에게 재미를 선사한다.
+                {t('section_mcu.delivers_enjoyment_to_users_who_seek_high_speed_driving')}
               </Typography>
-              <Typography
-                variant='h2'
-                fontWeight='bold'
-                sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}></Typography>
             </>
           )}
         </S.FloatingMCUContentContainer>
@@ -469,28 +483,28 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '3rem', marginBottom: '1.5rem' }}>
-            더 빠르고 강한 모터
+            {t('section_motor.faster_and_more_powerful_motor')}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            더 빠르고 강한, 자체 설계한 In Wheel 모터
+            {t('section_motor.faster_and_more_powerful_self_designed_in_wheel_motor')}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            최고 속력 100km/h
+            {t('section_motor.maximum_speed_100km_h')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>
-            <strong>·</strong> D사 72V/45Ah 최고 속력: 90km/h
+            <strong>·</strong> {t('section_motor.d_company_72v_45ah_maximum_speed_90km_h')}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            우수한 등판력
+            {t('section_motor.excellent_uphill_force')}
           </Typography>
         </S.FloatingMotorContentContainer>
       </FloatingContent>
@@ -513,16 +527,19 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '3rem', marginBottom: '1.5rem' }}>
-            효율적인 에너지 사용
+            {t('section_regenrative_braking.efficient_energy_usage')}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            달리면 달릴수록 충전되는 에너지
+            {t('section_regenrative_braking.the_more_you_drive_the_more_charging_energy')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>
-            <strong>·</strong> 회생제동 기능을 통해 총 <strong>30%</strong> 의 에너지 효율 증대
+            <strong>·</strong>{' '}
+            {t(
+              'section_regenrative_braking.total_30_percent_energy_efficiency_increase_through_regenerative_braking_function'
+            )}
           </Typography>
         </S.FloatingRegenrativeBrakingContentContainer>
       </FloatingContent>
@@ -546,9 +563,9 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            전기 오토바이의 선입견을 깬 오토바이
+            {t('section_user_review.title1')}
           </Typography>
-          <Typography sx={{ fontSize: '1rem' }}>파워가 말도 안되네요</Typography>
+          <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content1')}</Typography>
         </S.FloatingUserReviewContentContainer>
       </FloatingContent>
       <FloatingContent
@@ -561,9 +578,9 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            효율성이 엄청납니다.
+            {t('section_user_review.title2')}
           </Typography>
-          <Typography sx={{ fontSize: '1rem' }}>전기세가 확 줄은게 체감이되요</Typography>
+          <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content2')}</Typography>
         </S.FloatingUserReviewContentContainer>
       </FloatingContent>
       <FloatingContent
@@ -576,11 +593,9 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            미친 가격이네요
+            {t('section_user_review.title3')}
           </Typography>
-          <Typography sx={{ fontSize: '1rem' }}>
-            지원금까지 합하니 말도안되는 가성비라 생각합니다.
-          </Typography>
+          <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content3')}</Typography>
         </S.FloatingUserReviewContentContainer>
       </FloatingContent>
       <FloatingContent
@@ -593,11 +608,9 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            주행감이 진짜 좋은데요?
+            {t('section_user_review.title4')}
           </Typography>
-          <Typography sx={{ fontSize: '1rem' }}>
-            내연 오토바이를 원래 좋아해서 자주 타고 다녔는데, 주행감이 진짜 비슷하네요.
-          </Typography>
+          <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content4')}</Typography>
         </S.FloatingUserReviewContentContainer>
       </FloatingContent>
       {/* Detail Section */}
@@ -620,68 +633,78 @@ const Page: React.FC = () => {
             variant='h2'
             fontWeight='bold'
             sx={{ fontSize: '2rem', marginBottom: '1rem' }}>
-            차량 제원
+            {t('section_detail.vehicle_specifications')}
           </Typography>
           <S.DetailContentSection>
             <S.DetailContentSectionArea>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>엔진형식</S.DetailContentTitle>
-                <S.DetailContentDescription>수랭 직렬 4기통 슈퍼차저</S.DetailContentDescription>
+                <S.DetailContentTitle>{t('section_detail.engine_type')}</S.DetailContentTitle>
+                <S.DetailContentDescription>
+                  {t('section_detail.liquid_cooled_in_line_4_cylinder_supercharger')}
+                </S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>배기량</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.displacement')}</S.DetailContentTitle>
                 <S.DetailContentDescription>998cc</S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>압축비</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.compression_ratio')}</S.DetailContentTitle>
                 <S.DetailContentDescription>11.2 : 1</S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>최고출력</S.DetailContentTitle>
+                <S.DetailContentTitle>
+                  {t('section_detail.maximum_power_output')}
+                </S.DetailContentTitle>
                 <S.DetailContentDescription>200ps (147.1kW) / 11,000rpm</S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>최대토크</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.maximum_torque')}</S.DetailContentTitle>
                 <S.DetailContentDescription>
                   137.0Nm (14.0kgf.m) / 8,500rpm
                 </S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>시트고</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.seat_height')}</S.DetailContentTitle>
                 <S.DetailContentDescription>830mm</S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>연료탱크 용량</S.DetailContentTitle>
+                <S.DetailContentTitle>
+                  {t('section_detail.fuel_tank_capacity')}
+                </S.DetailContentTitle>
                 <S.DetailContentDescription>19 liters</S.DetailContentDescription>
               </S.DetailContentFlexBox>
             </S.DetailContentSectionArea>
             <S.DetailContentSectionArea>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>브레이크</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.brake')}</S.DetailContentTitle>
                 <S.DetailContentDescription>
-                  전륜 320mm 듀얼 세미 플로팅 디스크 / 브램보 스틸레마 캘리퍼
+                  {t(
+                    'section_detail.front_320mm_dual_semi_floating_disc_brembo_steel_braided_caliper'
+                  )}
                   <br />
-                  후륜 260mm 싱글디스크 / 싱글 피스톤 캘리퍼
+                  {t('section_detail.rear_260mm_single_disc_single_piston_caliper')}
                 </S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>서스펜션</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.suspension')}</S.DetailContentTitle>
                 <S.DetailContentDescription>
-                  전륜 43mm KECS - 전자식 풀 어저스터블 도립식 포크
+                  {t('section_detail.front_43mm_kecs_electronic_full_adjustable_inverted_fork')}
                   <br />
-                  후륜 수평 백링크 KECS - 전자식 풀 어저스터블 쇽업쇼버
+                  {t(
+                    'section_detail.rear_horizontal_backlink_kecs_electronic_full_adjustable_shock_absorber'
+                  )}
                 </S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>타이어</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.tire')}</S.DetailContentTitle>
                 <S.DetailContentDescription>
-                  전륜 120 / 70ZR17M/C (58W)
+                  {t('section_detail.front_120_70zr17m_c_58w')}
                   <br />
-                  후륜 190 / 55ZR17M/C (75W)
+                  {t('section_detail.rear_190_55zr17m_c_75w')}
                 </S.DetailContentDescription>
               </S.DetailContentFlexBox>
               <S.DetailContentFlexBox>
-                <S.DetailContentTitle>차량중량</S.DetailContentTitle>
+                <S.DetailContentTitle>{t('section_detail.vehicle_weight')}</S.DetailContentTitle>
                 <S.DetailContentDescription>240kg</S.DetailContentDescription>
               </S.DetailContentFlexBox>
             </S.DetailContentSectionArea>

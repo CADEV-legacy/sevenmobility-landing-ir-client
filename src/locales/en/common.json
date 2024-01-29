@@ -1,0 +1,90 @@
+{
+  "error": {
+    "impossible_section_entered": "Impossible section entered.",
+    "failed_to_load_the_motorcycle_model": "Failed to load the motorcycle model."
+  },
+  "title": {
+    "we_are_creating_a_sustainable_future_for_mobility": "We are creating a sustainable future for mobility.",
+    "innovation_and_novelty_encapsulated_seven_mobility": "Innovation and novelty encapsulated, Seven Mobility."
+  },
+  "section_spec": {
+    "driving_distance": "Driving distance",
+    "maximum_speed": "Maximum speed",
+    "motor_output": "Motor output"
+  },
+  "section_battery": {
+    "charing_time": "Charging time",
+    "driving_distance": "Driving distance",
+    "convenience": "Convenience",
+    "ultra_fast_charging": "Ultra-fast charging",
+    "30_minutes_to_fully_charge_no_need_for_a_station": "30 minutes to fully charge, no need for a station.",
+    "solving_heat_issues_during_high_voltage_charging_enhances_safety": "Solving heat issues during high-voltage charging enhances safety.",
+    "overwhelming_driving_range": "Overwhelming driving range",
+    "the_driving_range_on_a_single_charge_is_104km": "The driving range on a single charge is 104km.",
+    "environmental_ministry_testing_method_standards_CSV_40": "Environmental Ministry testing method standards (CSV-40)",
+    "with_a_72V_60Ah_battery_a_constant_speed_of_60km_h_allows_for_a_range_of_158km": "With a 72V / 60Ah battery, a constant speed of 60km/h allows for a range of 158km.",
+    "internal_test_results": "Internal test results"
+  },
+  "section_bms": {
+    "compatible_with_direct_parallel_connection_through_in_house_design_patent_pending": "Compatible with direct-parallel connection through in-house design (Patent pending)",
+    "designed_to_allow_separate_installation_of_a_1M_battery_without_communication_issues_worlds_first_patent_pending": "Designed to allow separate installation of a 1M battery without communication issues (World's first, patent pending)",
+    "designed_for_separate_installation_of_the_battery_to_ensure_safety_can_be_separated_from_1M_and_above": "Designed for separate installation of the battery to ensure safety. Can be separated from 1M and above"
+  },
+  "section_mcu": {
+    "basic": "BASIC",
+    "settings_for_daily_life_or_commuting_including_speed_and_power_uphill_force": "Settings for daily life or commuting, including speed and power (uphill force)",
+    "efficient_energy_utilization_combined_with_appropriate_speed_and_output": "Efficient energy utilization combined with appropriate speed and output",
+    "a_mode_optimized_for_overall_driving_range_based_on_these_factors": "A mode optimized for overall driving range based on these factors",
+    "delivery": "DELIVERY",
+    "livelihood_oriented_user_settings": "Livelihood-oriented user settings",
+    "raise_energy_efficiency_to_the_maximum": "Raise energy efficiency to the maximum",
+    "minimize_charging_cycles_and_enable_longer_usage": "Minimize charging cycles and enable longer usage",
+    "touring": "TOURING",
+    "user_settings_for_enjoying_touring": "User settings for enjoying touring",
+    "amplify_the_power_of_the_motor_to_the_maximum": "Amplify the power of the motor to the maximum",
+    "delivers_enjoyment_to_users_who_seek_high_speed_driving": "Delivers enjoyment to users who seek high-speed driving"
+  },
+  "section_motor": {
+    "faster_and_more_powerful_motor": "Faster and more powerful motor",
+    "faster_and_more_powerful_self_designed_in_wheel_motor": "Faster and more powerful, self-designed In Wheel motor",
+    "maximum_speed_100km_h": "Maximum speed 100km/h",
+    "d_company_72v_45ah_maximum_speed_90km_h": "D company 72V/45Ah Maximum speed: 90km/h",
+    "excellent_uphill_force": "Excellent uphill force"
+  },
+  "section_regenrative_braking": {
+    "efficient_energy_usage": "Efficient energy usage",
+    "the_more_you_drive_the_more_charging_energy": "The more you drive, the more charging energy",
+    "total_30_percent_energy_efficiency_increase_through_regenerative_braking_function": "Total 30% energy efficiency increase through regenerative braking function"
+  },
+  "section_user_review": {
+    "title1": "Fast Charging and Impressive Range!",
+    "content1": "I recently started using the Seven Mobility electric bike, and I'm impressed with how fast it charges and the decent range it offers. Charging in the morning gets me through my commute to work and back home in the evening with almost no energy worries. I love it!",
+    "title2": "Effortless City Riding with Environmentally Friendly Seven Mobility!",
+    "content2": "City riding is incredibly convenient with the Seven Mobility electric bike. No worries about parking, and the feeling of smoothly maneuvering through traffic is really enjoyable. Plus, it's environmentally friendly, adding to the comfort of using it in the city.",
+    "title3": "Cost-Effective Energy and Savings!",
+    "content3": "The energy cost is really low, providing significant savings in daily expenses. With Seven Mobility, I don't have to stop by the gas station, making it wallet-friendly and environmentally beneficial. I'm even more satisfied with my rides now.",
+    "title4": "Exceptional Power, No Match for Traditional Gasoline Bikes!",
+    "content4": "Riding the Seven Mobility electric bike, I feel exceptional engine power that competes with, or even surpasses, traditional gasoline bikes. Despite its compact size, the acceleration and speed maintenance are outstanding, making it a thrilling experience. I'm genuinely happy riding it, questioning if it's really an electric bike!"
+  },
+  "section_detail": {
+    "vehicle_specifications": "Vehicle specifications",
+    "engine_type": "Engine type",
+    "liquid_cooled_in_line_4_cylinder_supercharger": "Liquid-cooled in-line 4-cylinder supercharger",
+    "displacement": "Displacement",
+    "compression_ratio": "Compression ratio",
+    "maximum_power_output": "Maximum power output",
+    "maximum_torque": "Maximum torque",
+    "seat_height": "Seat height",
+    "fuel_tank_capacity": "Fuel tank capacity",
+    "brake": "Brake",
+    "front_320mm_dual_semi_floating_disc_brembo_steel_braided_caliper": "Front 320mm dual semi-floating disc / Brembo steel-braided caliper",
+    "rear_260mm_single_disc_single_piston_caliper": "Rear 260mm single disc / Single piston caliper",
+    "suspension": "Suspension",
+    "front_43mm_kecs_electronic_full_adjustable_inverted_fork": "Front 43mm KECS - Electronic Full Adjustable Inverted Fork",
+    "rear_horizontal_backlink_kecs_electronic_full_adjustable_shock_absorber": "Rear Horizontal Backlink KECS - Electronic Full Adjustable Shock Absorber",
+    "tire": "Tire",
+    "front_120_70zr17m_c_58w": "Front 120/70ZR17M/C (58W)",
+    "rear_190_55zr17m_c_75w": "Rear 190/55ZR17M/C (75W)",
+    "vehicle_weight": "Vehicle weight"
+  }
+}

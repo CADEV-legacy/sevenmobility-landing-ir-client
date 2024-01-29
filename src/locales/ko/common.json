@@ -1,0 +1,90 @@
+{
+  "error": {
+    "impossible_section_entered": "불가능한 섹션이 입력되었습니다.",
+    "failed_to_load_the_motorcycle_model": "오토바이 모델을 불러오는데 실패했습니다."
+  },
+  "title": {
+    "we_are_creating_a_sustainable_future_for_mobility": "우리는 지속 가능한 미래 모빌리티를 만듭니다.",
+    "innovation_and_novelty_encapsulated_seven_mobility": "새로움과 혁신을 담다, 세븐모빌리티"
+  },
+  "section_spec": {
+    "driving_distance": "주행 거리",
+    "maximum_speed": "최고 속도",
+    "motor_output": "모터 출력"
+  },
+  "section_battery": {
+    "charing_time": "충 전 시 간",
+    "driving_distance": "주 행 거 리",
+    "convenience": "편 리 성",
+    "ultra_fast_charging": "초고속 충전",
+    "30_minutes_to_fully_charge_no_need_for_a_station": "30분 만에 100% 충전 가능, 스테이션 불필요.",
+    "solving_heat_issues_during_high_voltage_charging_enhances_safety": "고압 충전 시 발열 문제를 해결하여 안전성 증가.",
+    "overwhelming_driving_range": "압도적인 주행 거리",
+    "the_driving_range_on_a_single_charge_is_104km": "1회 충전시 주행 거리 104km",
+    "environmental_ministry_testing_method_standards_CSV_40": "환경부 시험방법 기준 (CSV-40)",
+    "with_a_72V_60Ah_battery_a_constant_speed_of_60km_h_allows_for_a_range_of_158km": "72V / 60Ah 배터리로 60km 정속 주행 시 158km 주행 가능",
+    "internal_test_results": "자체 테스트 결과"
+  },
+  "section_bms": {
+    "compatible_with_direct_parallel_connection_through_in_house_design_patent_pending": "자체 설계로 직병렬 호환 가능 (특허 진행 중)",
+    "designed_to_allow_separate_installation_of_a_1M_battery_without_communication_issues_worlds_first_patent_pending": "1M 배터리와 분리 장착해도 통신 장애없이 설계 (세계 최초, 특허 진행 중)",
+    "designed_for_separate_installation_of_the_battery_to_ensure_safety_can_be_separated_from_1M_and_above": "배터리와 분리되게 설계하여 안전성 확보. 1M이상 분리 가능"
+  },
+  "section_mcu": {
+    "basic": "BASIC",
+    "settings_for_daily_life_or_commuting_including_speed_and_power_uphill_force": "일상생활 또는 출퇴근용에 맞는 세팅 속도, 힘(등판력)",
+    "efficient_energy_utilization_combined_with_appropriate_speed_and_output": "효율적인 에너지 사용과 더불어 적당한 속도와 출력",
+    "a_mode_optimized_for_overall_driving_range_based_on_these_factors": "그에 따른 주행거리 모두 최적화한 모드",
+    "delivery": "DELIVERY",
+    "livelihood_oriented_user_settings": "생계형 사용자 세팅",
+    "raise_energy_efficiency_to_the_maximum": "에너지효율을 최고치로 끌어올려",
+    "minimize_charging_cycles_and_enable_longer_usage": "최대한 충전 횟수를 줄이고 오랫동안 사용할 수 있도록 함",
+    "touring": "TOURING",
+    "user_settings_for_enjoying_touring": "투어링을 즐기는 사용자 세팅",
+    "amplify_the_power_of_the_motor_to_the_maximum": "모터의 힘을 최대한으로 증폭",
+    "delivers_enjoyment_to_users_who_seek_high_speed_driving": "고속 주행을 원하는 사용자에게 즐거움을 제공"
+  },
+  "section_motor": {
+    "faster_and_more_powerful_motor": "더 빠르고 강력한 모터",
+    "faster_and_more_powerful_self_designed_in_wheel_motor": "더 빠르고 강력한, 자체 설계한 In Wheel 모터",
+    "maximum_speed_100km_h": "최고 속력 100km/h",
+    "d_company_72v_45ah_maximum_speed_90km_h": "D사 72V/45Ah 최고 속력: 90km/h",
+    "excellent_uphill_force": "우수한 등판력"
+  },
+  "section_regenrative_braking": {
+    "efficient_energy_usage": "효율적인 에너지 사용",
+    "the_more_you_drive_the_more_charging_energy": "달리면 달릴수록 충전되는 에너지",
+    "total_30_percent_energy_efficiency_increase_through_regenerative_braking_function": "회생제동 기능을 통해 총 30%의 에너지 효율 증대"
+  },
+  "section_user_review": {
+    "title1": "충전이 빠르고 주행 거리도 꽤 길어서 좋아요!",
+    "content1": "세븐모빌리티 오토바이 쓰기 시작한 지 얼마 안 됐는데, 충전이 금방 끝나서 정말 편하게 다니고 있어요. 아침에 충전하고 나가면 출근 갈 때도, 퇴근하고 나오면 집에 돌아갈 때도 거의 에너지 걱정 없이 다닐 수 있어서 너무 좋아요.",
+    "title2": "도심 주행이 간편하고 친환경적인 세븐모빌리티로 편하게 이용 중!",
+    "content2": "도심 주행에 너무 편리한데요. 세븐모빌리티 오토바이로 주행하면 주차 걱정도 없고, 트래픽에서 스르륵 빠져나가는 느낌이 정말 좋아요. 게다가 전기로 돌아가니 환경에도 더 친화적이라서 도심 속에서 편안하게 이용 중이에요.",
+    "title3": "에너지 비용이 낮아서 생활비 절감 효과가 있어요!",
+    "content3": "에너지 비용이 정말 낮아서 생활비 절감 효과가 있어요. 세븐모빌리티로 다니면서 주유소 들르지 않아도 되니까, 지갑에도 친숙하고 환경에도 좋아서 더욱 만족스럽게 다니고 있어요.",
+    "title4": "엄청난 파워, 세븐모빌리티로 기존 가솔린 엔진 오토바이와 비교하면 꿀릴 게 없어요!",
+    "content4": "세븐모빌리티 오토바이를 타보니 엄청난 엔진 힘이 느껴져서 정말 신나는 주행을 즐기고 있어요. 특히 나름 소형 차량임에도 불구하고, 가솔린 엔진 오토바이들과 비교하면 전혀 손색이 없어서 놀라웠어요. 세븐모빌리티로 주행하면서 '이게 전기오토바이 맞아?' 하는 생각이 들 정도로 엔진의 강력함을 느낄 수 있어서 정말 만족스럽게 다니고 있어요."
+  },
+  "section_detail": {
+    "vehicle_specifications": "차량 제원",
+    "engine_type": "엔진 형식",
+    "liquid_cooled_in_line_4_cylinder_supercharger": "수랭 직렬 4기통 슈퍼차저",
+    "displacement": "배기량",
+    "compression_ratio": "압축비",
+    "maximum_power_output": "최고출력",
+    "maximum_torque": "최대토크",
+    "seat_height": "시트고",
+    "fuel_tank_capacity": "연료탱크 용량",
+    "brake": "브레이크",
+    "front_320mm_dual_semi_floating_disc_brembo_steel_braided_caliper": "전륜 320mm 듀얼 세미 플로팅 디스크 / 브램보 스틸레마 캘리퍼",
+    "rear_260mm_single_disc_single_piston_caliper": "후륜 260mm 싱글 디스크 / 싱글 피스톤 캘리퍼",
+    "suspension": "서스펜션",
+    "front_43mm_kecs_electronic_full_adjustable_inverted_fork": "전륜 43mm KECS - 전자식 풀 어저스터블 도립식 포크",
+    "rear_horizontal_backlink_kecs_electronic_full_adjustable_shock_absorber": "후륜 수평 백링크 KECS - 전자식 풀 어저스터블 쇽업쇼버",
+    "tire": "타이어",
+    "front_120_70zr17m_c_58w": "전륜 120/70ZR17M/C (58W)",
+    "rear_190_55zr17m_c_75w": "후륜 190/55ZR17M/C (75W)",
+    "vehicle_weight": "차량중량"
+  }
+}

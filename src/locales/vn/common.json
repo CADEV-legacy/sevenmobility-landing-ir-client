@@ -1,0 +1,90 @@
+{
+  "error": {
+    "impossible_section_entered": "Phần không thể",
+    "failed_to_load_the_motorcycle_model": "Không thể tải mô hình xe máy."
+  },
+  "title": {
+    "we_are_creating_a_sustainable_future_for_mobility": "Chúng tôi đang tạo ra một tương lai bền vững cho phương tiện di chuyển.",
+    "innovation_and_novelty_encapsulated_seven_mobility": "Sự đổi mới và sáng tạo được đong đầy, Seven Mobility."
+  },
+  "section_spec": {
+    "driving_distance": "Khoảng cách di chuyển",
+    "maximum_speed": "Tốc độ tối đa",
+    "motor_output": "Đầu ra động cơ"
+  },
+  "section_battery": {
+    "charing_time": "Thời gian sạc",
+    "driving_distance": "Khoảng cách di chuyển",
+    "convenience": "Tiện ích",
+    "ultra_fast_charging": "Sạc siêu nhanh",
+    "30_minutes_to_fully_charge_no_need_for_a_station": "30 phút để sạc đầy 100%, không cần trạm.",
+    "solving_heat_issues_during_high_voltage_charging_enhances_safety": "Giải quyết vấn đề nhiệt độ trong quá trình sạc điện áp cao nâng cao độ an toàn.",
+    "overwhelming_driving_range": "Khoảng cách lái xe lớn đến khó tin",
+    "the_driving_range_on_a_single_charge_is_104km": "Khoảng cách di chuyển sau mỗi lần sạc là 104km.",
+    "environmental_ministry_testing_method_standards_CSV_40": "Tiêu chuẩn phương pháp kiểm tra của Bộ Môi trường (CSV-40)",
+    "with_a_72V_60Ah_battery_a_constant_speed_of_60km_h_allows_for_a_range_of_158km": "Với pin 72V / 60Ah, điều này cho phép di chuyển liên tục ở tốc độ 60km/h với khoảng cách là 158km.",
+    "internal_test_results": "Kết quả kiểm tra nội bộ"
+  },
+  "section_bms": {
+    "compatible_with_direct_parallel_connection_through_in_house_design_patent_pending": "Tương thích với kết nối trực tiếp-song song thông qua thiết kế nội bộ (Đang đợi bằng sáng chế)",
+    "designed_to_allow_separate_installation_of_a_1M_battery_without_communication_issues_worlds_first_patent_pending": "Thiết kế để cho phép lắp đặt riêng lẻ pin 1M mà không gặp vấn đề giao tiếp (Đầu tiên trên thế giới, đang đợi bằng sáng chế)",
+    "designed_for_separate_installation_of_the_battery_to_ensure_safety_can_be_separated_from_1M_and_above": "Thiết kế để lắp đặt pin riêng biệt để đảm bảo an toàn. Có thể tách ra từ 1M trở lên"
+  },
+  "section_mcu": {
+    "basic": "Cơ bản",
+    "settings_for_daily_life_or_commuting_including_speed_and_power_uphill_force": "Cài đặt phù hợp cho cuộc sống hàng ngày hoặc đi lại, bao gồm tốc độ và sức mạnh (lực đẩy lên dốc)",
+    "efficient_energy_usage_along_with_appropriate_speed_and_output": "Sử dụng năng lượng một cách hiệu quả kết hợp với tốc độ và công suất phù hợp",
+    "a_mode_optimized_for_overall_driving_range_based_on_these_factors": "Một chế độ được tối ưu hóa cho tổng khoảng cách di chuyển dựa trên những yếu tố này",
+    "delivery": "Giao hàng",
+    "livelihood_oriented_user_settings": "Cài đặt dành cho người dùng hướng nghiệp",
+    "raise_energy_efficiency_to_the_maximum": "Tăng hiệu suất năng lượng lên tối đa",
+    "minimize_charging_cycles_and_enable_longer_usage": "Giảm số lần sạc tối đa và tăng thời gian sử dụng",
+    "touring": "DU LỊCH",
+    "user_settings_for_enjoying_touring": "Cài đặt dành cho người dùng thích thú du lịch",
+    "amplify_the_power_of_the_motor_to_the_maximum": "Tăng cường sức mạnh của động cơ lên tối đa",
+    "delivers_enjoyment_to_users_who_seek_high_speed_driving": "Mang lại niềm vui cho người dùng muốn trải nghiệm lái xe nhanh"
+  },
+  "section_motor": {
+    "faster_and_more_powerful_motor": "Động cơ nhanh hơn và mạnh mẽ hơn",
+    "faster_and_more_powerful_self_designed_in_wheel_motor": "Nhanh hơn và mạnh mẽ hơn, động cơ In Wheel tự thiết kế",
+    "maximum_speed_100km_h": "Tốc độ tối đa 100km/h",
+    "d_company_72v_45ah_maximum_speed_90km_h": "D công ty 72V/45Ah Tốc độ tối đa: 90km/h",
+    "excellent_uphill_force": "Lực đẩy lên xuất sắc"
+  },
+  "section_regenrative_braking": {
+    "efficient_energy_usage": "Sử dụng năng lượng hiệu quả",
+    "the_more_you_drive_the_more_charging_energy": "Càng chạy, càng nhiều năng lượng sạc",
+    "total_30_percent_energy_efficiency_increase_through_regenerative_braking_function": "Tổng cộng tăng 30% hiệu quả năng lượng thông qua chức năng phanh tái tạo"
+  },
+  "section_user_review": {
+    "title1": "Sạc Nhanh và Dải Đi Xa Ấn Tượng!",
+    "content1": "Gần đây, tôi mới bắt đầu sử dụng xe máy điện Seven Mobility, và tôi ấn tượng với việc sạc nhanh và khoảng cách di chuyển tốt mà nó cung cấp. Sạc vào buổi sáng giúp tôi hoàn thành hành trình đi làm và trở về nhà vào buổi tối mà không gặp nhiều lo lắng về năng lượng. Tôi rất thích!",
+    "title2": "Điều Khiển Thành Phố Nhẹ Nhàng với Seven Mobility Thân Thiện Với Môi Trường!",
+    "content2": "Việc điều khiển trong thành phố thực sự thuận tiện với chiếc xe máy điện của Seven Mobility. Không lo lắng về chỗ đậu xe, và cảm giác di chuyển mượt mà qua giao thông thực sự thú vị. Ngoài ra, nó còn thân thiện với môi trường, làm tăng sự thoải mái khi sử dụng trong thành phố.",
+    "title3": "Năng Lượng Hiệu Quả và Tiết Kiệm!",
+    "content3": "Chi phí năng lượng thực sự thấp, mang lại sự tiết kiệm đáng kể trong chi phí hàng ngày. Với Seven Mobility, tôi không cần ghé qua cây xăng, khiến cho nó thân thiện với ví tiền và môi trường. Tôi thậm chí càng hài lòng hơn với những chuyến đi của mình ngay bây giờ.",
+    "title4": "Sức Mạnh Xuất Sắc, Không Có Đối Thủ so với Xe Máy Xăng Truyền Thống!",
+    "content4": "Khi đi xe máy điện Seven Mobility, tôi cảm nhận được sức mạnh xuất sắc, có thể sánh kịp, thậm chí vượt trội so với những chiếc xe máy xăng truyền thống. Mặc dù có kích thước nhỏ gọn, nhưng khả năng tăng tốc và duy trì tốc độ đều xuất sắc, tạo nên trải nghiệm thú vị. Tôi thực sự hạnh phúc khi điều khiển nó, và đặt ra câu hỏi liệu đó có phải là một chiếc xe máy điện thật sự không!"
+  },
+  "section_detail": {
+    "vehicle_specifications": "Thông số kỹ thuật xe",
+    "engine_type": "Loại động cơ",
+    "liquid_cooled_in_line_4_cylinder_supercharger": "Tản nhiệt bằng nước, động cơ 4 xy-lanh liên tục với siêu nạp",
+    "displacement": "Dung tích động cơ",
+    "compression_ratio": "Tỷ lệ nén",
+    "maximum_power_output": "Công suất tối đa",
+    "maximum_torque": "Momen xoắn tối đa",
+    "seat_height": "Chiều cao yên xe",
+    "fuel_tank_capacity": "Dung tích bình xăng",
+    "brake": "Phanh",
+    "front_320mm_dual_semi_floating_disc_brembo_steel_braided_caliper": "Đĩa trước 320mm kép nổi / Brembo thủy tinh thép lót phanh",
+    "rear_260mm_single_disc_single_piston_caliper": "Đĩa sau 260mm đơn / Brembo lốc xi piston đơn",
+    "suspension": "Hệ thống treo",
+    "front_43mm_kecs_electronic_full_adjustable_inverted_fork": "Trước 43mm KECS - Phuộc nghịch điện tử đầy đủ điều chỉnh",
+    "rear_horizontal_backlink_kecs_electronic_full_adjustable_shock_absorber": "Phía sau Liên kết ngược Ngang KECS - Bảo dưỡng giảm xóc đầy đủ điều chỉnh điện tử",
+    "tire": "Lốp",
+    "front_120_70zr17m_c_58w": "Trước 120/70ZR17M/C (58W)",
+    "rear_190_55zr17m_c_75w": "Phía sau 190/55ZR17M/C (75W)",
+    "vehicle_weight": "Trọng lượng xe"
+  }
+}
