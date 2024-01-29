@@ -1404,46 +1404,46 @@ export class MotorcycleIIIDM extends IIIDM {
    * NOTE: For manage POV.
    * TODO: Remove this after set POV.
    */
-  private updateControl() {
-    this.controlManager.orbitControl.target = this.activeCameraLookAt;
-    this.controlManager.orbitControl.update();
-    this.activeCamera.lookAt(this.activeCameraLookAt);
+  // private updateControl() {
+  //   this.controlManager.orbitControl.target = this.activeCameraLookAt;
+  //   this.controlManager.orbitControl.update();
+  //   this.activeCamera.lookAt(this.activeCameraLookAt);
 
-    this.activeCamera.updateProjectionMatrix();
-  }
+  //   this.activeCamera.updateProjectionMatrix();
+  // }
 
-  /**
-   * NOTE: For manage POV.
-   * TODO: Remove this after set POV.
-   */
-  private povHelper() {
-    const povPositionFolder = this.GUIManager.gui.addFolder('POV position');
+  // /**
+  //  * NOTE: For manage POV.
+  //  * TODO: Remove this after set POV.
+  //  */
+  // private povHelper() {
+  //   const povPositionFolder = this.GUIManager.gui.addFolder('POV position');
 
-    povPositionFolder.add(this.activeCamera.position, 'x', -10, 10, 0.01);
-    povPositionFolder.add(this.activeCamera.position, 'y', -10, 10, 0.01);
-    povPositionFolder.add(this.activeCamera.position, 'z', -10, 10, 0.01);
+  //   povPositionFolder.add(this.activeCamera.position, 'x', -10, 10, 0.01);
+  //   povPositionFolder.add(this.activeCamera.position, 'y', -10, 10, 0.01);
+  //   povPositionFolder.add(this.activeCamera.position, 'z', -10, 10, 0.01);
 
-    const povLookAtFolder = this.GUIManager.gui.addFolder('POV lookAt');
+  //   const povLookAtFolder = this.GUIManager.gui.addFolder('POV lookAt');
 
-    povLookAtFolder.add(this.activeCameraLookAt, 'x', -10, 10, 0.01);
-    povLookAtFolder.add(this.activeCameraLookAt, 'y', -10, 10, 0.01);
-    povLookAtFolder.add(this.activeCameraLookAt, 'z', -10, 10, 0.01);
+  //   povLookAtFolder.add(this.activeCameraLookAt, 'x', -10, 10, 0.01);
+  //   povLookAtFolder.add(this.activeCameraLookAt, 'y', -10, 10, 0.01);
+  //   povLookAtFolder.add(this.activeCameraLookAt, 'z', -10, 10, 0.01);
 
-    this.GUIManager.gui.open();
+  //   this.GUIManager.gui.open();
 
-    this.controlManager.orbitControl.target = this.activeCameraLookAt;
-    this.controlManager.orbitControl.update();
-    this.controlManager.activate();
+  //   this.controlManager.orbitControl.target = this.activeCameraLookAt;
+  //   this.controlManager.orbitControl.update();
+  //   this.controlManager.activate();
 
-    this.frameManager.addFrameUpdateAction({
-      name: this.updateControl.name,
-      action: this.updateControl.bind(this),
-    });
+  //   this.frameManager.addFrameUpdateAction({
+  //     name: this.updateControl.name,
+  //     action: this.updateControl.bind(this),
+  //   });
 
-    if (this.frameManager.isActive) return;
+  //   if (this.frameManager.isActive) return;
 
-    this.frameManager.activate();
-  }
+  //   this.frameManager.activate();
+  // }
 
   async activate() {
     this.onActivate();
