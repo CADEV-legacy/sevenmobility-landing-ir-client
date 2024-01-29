@@ -129,7 +129,7 @@ export const FloatingBMSTitleKRContainer = styled('div')({
 
 export const FloatingBMSContentContainer = styled('div')({
   display: 'flex',
-  width: '68rem',
+  width: '50rem',
   flexDirection: 'column',
   gap: '2rem',
   overflow: 'hidden',
@@ -139,7 +139,6 @@ export const FloatingMCUContentContainer = styled('div')({
   display: 'flex',
   width: '34rem',
   flexDirection: 'column',
-  alignItems: 'center',
   gap: '2rem',
   overflow: 'hidden',
 });

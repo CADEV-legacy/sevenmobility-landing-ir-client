@@ -1276,7 +1276,8 @@ export class MotorcycleIIIDM extends IIIDM {
 
     if (controlledSectionInfo.electricMotor.isActive) return;
 
-    this.animationManager.activate();
+    // TODO: Implement this
+    // this.animationManager.activate();
 
     this._onElectricMotorSectionActivateAction?.();
 

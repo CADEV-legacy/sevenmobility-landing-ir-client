@@ -51,8 +51,8 @@ export const BootstrapInput = styled(InputBase)(({ theme }) => ({
     // Use the system font instead of the default Roboto font.
     '&:focus': {
       borderRadius: 4,
-      borderColor: '#80bdff',
-      boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
+      borderColor: COLOR.grayScale90,
+      boxShadow: `0 0 0 0.2rem ${COLOR.grayScale90}`,
     },
   },
   '& .MuiSvgIcon-root': {

@@ -248,17 +248,17 @@ const Page: React.FC = () => {
         <S.FloatingBatteryDescriptionContainer>
           <S.BatteryDescriptionKeywordFlexContainer>
             <S.BatteryDescriptionKeyWord color={COLOR.grayScale10}>
-              <Typography variant='h3' fontWeight='bold'>
+              <Typography variant='h4' fontWeight='bold'>
                 {t('section_battery.charing_time')}
               </Typography>
             </S.BatteryDescriptionKeyWord>
             <S.BatteryDescriptionKeyWord color={COLOR.grayScale40}>
-              <Typography variant='h3' fontWeight='bold'>
+              <Typography variant='h4' fontWeight='bold'>
                 {t('section_battery.driving_distance')}
               </Typography>
             </S.BatteryDescriptionKeyWord>
             <S.BatteryDescriptionKeyWord color={COLOR.grayScale60}>
-              <Typography variant='h3' fontWeight='bold'>
+              <Typography variant='h4' fontWeight='bold'>
                 {t('section_battery.convenience')}
               </Typography>
             </S.BatteryDescriptionKeyWord>
@@ -268,13 +268,13 @@ const Page: React.FC = () => {
               <Typography
                 variant='h2'
                 fontWeight='bold'
-                sx={{ marginBottom: '3rem', fontSize: '3rem' }}>
+                sx={{ marginBottom: '3rem', fontSize: '1.5rem' }}>
                 {t('section_battery.ultra_fast_charging')}
               </Typography>
-              <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '1.5rem' }}>
+              <Typography variant='h3' fontWeight='bold' sx={{ marginBottom: '1.5rem' }}>
                 {t('section_battery.30_minutes_to_fully_charge_no_need_for_a_station')}
               </Typography>
-              <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '1.5rem' }}>
+              <Typography variant='h3' fontWeight='bold' sx={{ marginBottom: '1.5rem' }}>
                 {t(
                   'section_battery.solving_heat_issues_during_high_voltage_charging_enhances_safety'
                 )}
@@ -284,16 +284,16 @@ const Page: React.FC = () => {
               <Typography
                 variant='h2'
                 fontWeight='bold'
-                sx={{ marginBottom: '3rem', fontSize: '3rem' }}>
+                sx={{ marginBottom: '3rem', fontSize: '1.5rem' }}>
                 {t('section_battery.overwhelming_driving_range')}
               </Typography>
-              <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '0.5rem' }}>
+              <Typography variant='h3' fontWeight='bold' sx={{ marginBottom: '0.5rem' }}>
                 {t('section_battery.the_driving_range_on_a_single_charge_is_104km')}
               </Typography>
               <Typography variant='h5' sx={{ marginBottom: '1.5rem' }}>
                 {t('section_battery.environmental_ministry_testing_method_standards_CSV_40')}
               </Typography>
-              <Typography variant='h2' fontWeight='bold' sx={{ marginBottom: '0.5rem' }}>
+              <Typography variant='h3' fontWeight='bold' sx={{ marginBottom: '0.5rem' }}>
                 {t(
                   'section_battery.with_a_72V_60Ah_battery_a_constant_speed_of_60km_h_allows_for_a_range_of_158km'
                 )}
@@ -378,7 +378,7 @@ const Page: React.FC = () => {
               <Typography
                 variant='h2'
                 fontWeight='bold'
-                sx={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+                sx={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                 {t('section_mcu.basic')}
               </Typography>
               <Typography
@@ -410,7 +410,7 @@ const Page: React.FC = () => {
               <Typography
                 variant='h2'
                 fontWeight='bold'
-                sx={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+                sx={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                 {t('section_mcu.delivery')}
               </Typography>
               <Typography
@@ -438,7 +438,7 @@ const Page: React.FC = () => {
               <Typography
                 variant='h2'
                 fontWeight='bold'
-                sx={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+                sx={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                 {t('section_mcu.touring')}
               </Typography>
               <Typography
@@ -482,19 +482,19 @@ const Page: React.FC = () => {
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '3rem', marginBottom: '1.5rem' }}>
+            sx={{ fontSize: '2rem', marginBottom: '1.5rem' }}>
             {t('section_motor.faster_and_more_powerful_motor')}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_motor.faster_and_more_powerful_self_designed_in_wheel_motor')}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_motor.maximum_speed_100km_h')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>
@@ -503,7 +503,7 @@ const Page: React.FC = () => {
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_motor.excellent_uphill_force')}
           </Typography>
         </S.FloatingMotorContentContainer>
@@ -526,13 +526,13 @@ const Page: React.FC = () => {
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '3rem', marginBottom: '1.5rem' }}>
+            sx={{ fontSize: '2rem', marginBottom: '1.5rem' }}>
             {t('section_regenrative_braking.efficient_energy_usage')}
           </Typography>
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_regenrative_braking.the_more_you_drive_the_more_charging_energy')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>
@@ -562,7 +562,7 @@ const Page: React.FC = () => {
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_user_review.title1')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content1')}</Typography>
@@ -577,7 +577,7 @@ const Page: React.FC = () => {
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_user_review.title2')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content2')}</Typography>
@@ -592,7 +592,7 @@ const Page: React.FC = () => {
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_user_review.title3')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content3')}</Typography>
@@ -607,7 +607,7 @@ const Page: React.FC = () => {
           <Typography
             variant='h2'
             fontWeight='bold'
-            sx={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+            sx={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
             {t('section_user_review.title4')}
           </Typography>
           <Typography sx={{ fontSize: '1rem' }}>{t('section_user_review.content4')}</Typography>
