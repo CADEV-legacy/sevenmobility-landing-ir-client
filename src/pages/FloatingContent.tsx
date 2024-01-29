@@ -33,36 +33,50 @@ type FloatingPosition =
 type FloatingContentProps = {
   children: React.ReactNode;
   isVisible: boolean;
+  isCentered?: boolean;
 } & FloatingPosition;
 
 export const FloatingContent: React.FC<FloatingContentProps> = ({
   children,
   isVisible,
+  isCentered,
   ...props
 }) => {
   if (isFloatingTopAndRightPosition(props))
     return (
-      <S.FloatingTopAndRightContentContainer isVisible={isVisible} {...props}>
+      <S.FloatingTopAndRightContentContainer
+        isVisible={isVisible}
+        isCentered={isCentered}
+        {...props}>
         {children}
       </S.FloatingTopAndRightContentContainer>
     );
 
   if (isFloatingTopAndLeftPosition(props))
     return (
-      <S.FloatingTopAndLeftContentContainer isVisible={isVisible} {...props}>
+      <S.FloatingTopAndLeftContentContainer
+        isVisible={isVisible}
+        isCentered={isCentered}
+        {...props}>
         {children}
       </S.FloatingTopAndLeftContentContainer>
     );
 
   if (isFloatingBottomAndRightPosition(props))
     return (
-      <S.FloatingBottomAndRightContentContainer isVisible={isVisible} {...props}>
+      <S.FloatingBottomAndRightContentContainer
+        isVisible={isVisible}
+        isCentered={isCentered}
+        {...props}>
         {children}
       </S.FloatingBottomAndRightContentContainer>
     );
 
   return (
-    <S.FloatingBottomAndLeftContentContainer isVisible={isVisible} {...props}>
+    <S.FloatingBottomAndLeftContentContainer
+      isVisible={isVisible}
+      isCentered={isCentered}
+      {...props}>
       {children}
     </S.FloatingBottomAndLeftContentContainer>
   );

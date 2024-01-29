@@ -7,11 +7,16 @@ import {
   FloatingTopAndRightPosition,
 } from './FloatingContent';
 
+const multipleStringPosition = (stringPercentage: string) => {
+  return `${parseInt(stringPercentage.replace('%', '')) * 2}%`;
+};
+
 export const FloatingTopAndRightContentContainer = styled('div')<
   {
     isVisible: boolean;
+    isCentered?: boolean;
   } & FloatingTopAndRightPosition
->(({ top, right, flagPosition, isVisible }) => ({
+>(({ top, right, flagPosition, isVisible, isCentered }) => ({
   position: 'fixed',
   zIndex: 2,
   top: flagPosition === 'top' ? (isVisible ? top : '-100%') : top,
@@ -20,13 +25,19 @@ export const FloatingTopAndRightContentContainer = styled('div')<
   WebkitTransition: 'all 1s ease-in-out',
   MozTransition: 'all 1s ease-in-out',
   overflow: 'hidden',
+  ...(isCentered && {
+    display: 'flex',
+    justifyContent: 'center',
+    width: `calc(100% - ${multipleStringPosition(right)})`,
+  }),
 }));
 
 export const FloatingTopAndLeftContentContainer = styled('div')<
   {
     isVisible: boolean;
+    isCentered?: boolean;
   } & FloatingTopAndLeftPosition
->(({ top, left, flagPosition, isVisible }) => ({
+>(({ top, left, flagPosition, isVisible, isCentered }) => ({
   position: 'fixed',
   zIndex: 2,
   top: flagPosition === 'top' ? (isVisible ? top : '-100%') : top,
@@ -35,13 +46,19 @@ export const FloatingTopAndLeftContentContainer = styled('div')<
   WebkitTransition: 'all 1s ease-in-out',
   MozTransition: 'all 1s ease-in-out',
   overflow: 'hidden',
+  ...(isCentered && {
+    display: 'flex',
+    justifyContent: 'center',
+    width: `calc(100% - ${multipleStringPosition(left)})`,
+  }),
 }));
 
 export const FloatingBottomAndRightContentContainer = styled('div')<
   {
     isVisible: boolean;
+    isCentered?: boolean;
   } & FloatingBottomAndRightPosition
->(({ bottom, right, flagPosition, isVisible }) => ({
+>(({ bottom, right, flagPosition, isVisible, isCentered }) => ({
   position: 'fixed',
   zIndex: 2,
   bottom: flagPosition === 'bottom' ? (isVisible ? bottom : '-100%') : bottom,
@@ -50,13 +67,19 @@ export const FloatingBottomAndRightContentContainer = styled('div')<
   WebkitTransition: 'all 1s ease-in-out',
   MozTransition: 'all 1s ease-in-out',
   overflow: 'hidden',
+  ...(isCentered && {
+    display: 'flex',
+    justifyContent: 'center',
+    width: `calc(100% - ${multipleStringPosition(right)})`,
+  }),
 }));
 
 export const FloatingBottomAndLeftContentContainer = styled('div')<
   {
     isVisible: boolean;
+    isCentered?: boolean;
   } & FloatingBottomAndLeftPosition
->(({ bottom, left, flagPosition, isVisible }) => ({
+>(({ bottom, left, flagPosition, isVisible, isCentered }) => ({
   position: 'fixed',
   zIndex: 2,
   bottom: flagPosition === 'bottom' ? (isVisible ? bottom : '-100%') : bottom,
@@ -65,4 +88,9 @@ export const FloatingBottomAndLeftContentContainer = styled('div')<
   WebkitTransition: 'all 1s ease-in-out',
   MozTransition: 'all 1s ease-in-out',
   overflow: 'hidden',
+  ...(isCentered && {
+    display: 'flex',
+    justifyContent: 'center',
+    width: `calc(100% - ${multipleStringPosition(left)})`,
+  }),
 }));

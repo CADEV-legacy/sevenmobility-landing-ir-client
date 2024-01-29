@@ -4,8 +4,12 @@ const LOADING_SECTION_DATA = {
   objectName: {
     directionalLight: 'directionalLight',
     smoke: 'smoke',
-    motorcycle: 'motorcycle',
     groundMirror: 'groundMirror',
+    motorcycleModel: 'motorcycleModel',
+    batteryModel: 'batteryModel',
+    mcuModel: 'mcuModel',
+    batteryModelSolo: 'batteryModelSolo',
+    mcuModelSolo: 'mcuModelSolo',
   },
   background: {
     colorCode: {
@@ -25,7 +29,13 @@ const LOADING_SECTION_DATA = {
     targetPosition: new Vector3(-1, 1, 0),
   },
   motorcycle: {
-    paths: ['/3ds/models/motorcycle.glb', '/3ds/models/battery.glb', '/3ds/models/mcu.glb'],
+    paths: [
+      '/3ds/models/motorcycle.glb',
+      '/3ds/models/battery.glb',
+      '/3ds/models/mcu.glb',
+      '/3ds/models/battery.glb',
+      '/3ds/models/mcu.glb',
+    ],
     position: new Vector3(1, 0, 0),
     headLight: {
       key: 'light',
@@ -142,8 +152,8 @@ const MCU_SECTION_DATA = {
 const ELECTRIC_MOTOR_SECTION_DATA = {
   objectName: {},
   camera: {
-    position: new Vector3(3, 0.75, -2.25),
-    lookAt: new Vector3(2, 0.5, 0),
+    position: new Vector3(0.8, 0.25, -2.25),
+    lookAt: new Vector3(0.5, 0.5, 0),
     changeCount: 200,
     targetChangeCount: 100,
   },
@@ -162,8 +172,8 @@ const REGENERATIVE_BRAKING_SECTION_DATA = {
 const USER_REVIEW_SECTION_DATA = {
   objectName: {},
   camera: {
-    position: new Vector3(4, 1.5, -3),
-    lookAt: new Vector3(1, 1, 0),
+    position: new Vector3(3, 1.5, -3),
+    lookAt: new Vector3(0, 1, 0),
     changeCount: 200,
     targetChangeCount: 100,
   },

@@ -272,8 +272,6 @@ export abstract class IIIDM {
       );
 
       if (duplicatedObjectIndex !== -1) {
-        this._activeScene.children[duplicatedObjectIndex].traverse(this.disposeObject);
-
         this._activeCamera.children[duplicatedObjectIndex] = object;
 
         return;
@@ -297,8 +295,6 @@ export abstract class IIIDM {
 
       if (!targetObject)
         throw this._logWorker.error(`Object name with ${name} is not exist. can't remove it.`);
-
-      targetObject.traverse(this.disposeObject);
 
       this._activeScene.remove(targetObject);
     });

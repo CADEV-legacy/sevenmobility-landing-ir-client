@@ -1,3 +1,3 @@
 export const SETTINGS = {
-  isDevMode: false,
+  isDevMode: import.meta.env.MODE !== 'production',
 } as const;

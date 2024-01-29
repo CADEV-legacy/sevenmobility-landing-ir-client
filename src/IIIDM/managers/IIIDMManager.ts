@@ -51,7 +51,7 @@ export abstract class IIIDMManager {
     }
 
     if (this._isActive) {
-      this.logWorker.warn('Already activated.');
+      this.logWorker.error('Already activated.');
 
       return;
     }

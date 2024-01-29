@@ -2,10 +2,13 @@ import {
   AmbientLight,
   Color,
   DirectionalLight,
+  Group,
   Layers,
   Mesh,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
+  Object3D,
+  Object3DEventMap,
   ShaderMaterial,
   Vector2,
   Vector3,
@@ -37,6 +40,9 @@ export class MotorcycleIIIDM extends IIIDM {
   private titleOpacityScoreSub = SECTION_DATA.loading.title.opacityScore.sub.initialValue;
   private activeCameraLookAt = new Vector3().copy(SECTION_DATA.loading.camera.lookAt);
   private sectionController: SectionController;
+  private motorcycleModel: Group<Object3DEventMap> | null = null;
+  private batteryModel: Object3D<Object3DEventMap> | null = null;
+  private mcuModel: Object3D<Object3DEventMap> | null = null;
   private _routeSectionTarget: ControlledSection | null = null;
 
   private _onHideTitleAction: OnHideTitleAction | null = null;
@@ -226,12 +232,23 @@ export class MotorcycleIIIDM extends IIIDM {
   // NOTE: Loading Section.
   private async loadMotorcycle() {
     try {
-      const [motorcycleModel, batteryModel, mcuModel] = await Promise.all(
-        SECTION_DATA.loading.motorcycle.paths.map(path => this.resourceWorker.loadResource(path))
-      );
+      const [motorcycleModel, batteryModel, mcuModel, batteryModelSolo, mcuModelSolo] =
+        await Promise.all(
+          SECTION_DATA.loading.motorcycle.paths.map(path => this.resourceWorker.loadResource(path))
+        );
 
-      batteryModel.scene.name = 'batteryModel';
-      mcuModel.scene.name = 'mcuModel';
+      this.batteryModel = batteryModelSolo.scene.children[0];
+      this.batteryModel.rotateX((Math.PI / 180) * 90);
+      this.batteryModel.rotateZ(-Math.PI / 2);
+      this.batteryModel.position.add(new Vector3(0, -0.05, 0));
+      this.batteryModel.name = SECTION_DATA.loading.objectName.batteryModelSolo;
+
+      this.mcuModel = mcuModelSolo.scene;
+      this.mcuModel.position.add(new Vector3(-0.8, -1.25, 0));
+      this.mcuModel.name = SECTION_DATA.loading.objectName.mcuModelSolo;
+
+      batteryModel.scene.name = SECTION_DATA.loading.objectName.batteryModel;
+      mcuModel.scene.name = SECTION_DATA.loading.objectName.mcuModel;
 
       motorcycleModel.scene.add(batteryModel.scene, mcuModel.scene);
       motorcycleModel.scene.traverse(object => {
@@ -248,7 +265,12 @@ export class MotorcycleIIIDM extends IIIDM {
         }
       });
       motorcycleModel.scene.position.add(SECTION_DATA.loading.motorcycle.position);
-      motorcycleModel.scene.name = SECTION_DATA.loading.objectName.motorcycle;
+      motorcycleModel.scene.name = SECTION_DATA.loading.objectName.motorcycleModel;
+
+      this.motorcycleModel = motorcycleModel.scene;
+
+      console.info('motorcycleModel', motorcycleModel);
+      this.animationManager.initialize(this.motorcycleModel, this.motorcycleModel.animations[0]);
 
       this.addObjectsToScene(true, motorcycleModel.scene);
     } catch (error) {
@@ -276,6 +298,9 @@ export class MotorcycleIIIDM extends IIIDM {
         name: onHideTitle.name,
         action: onHideTitle.bind(this),
       });
+
+      if (this.frameManager.isActive) return;
+
       this.frameManager.activate();
     });
   }
@@ -298,7 +323,7 @@ export class MotorcycleIIIDM extends IIIDM {
       const runMotorcycle = () => {
         this.activeScene.traverse(object => {
           // NOTE: Change motorcycle position by velocity.
-          if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+          if (object.name === SECTION_DATA.loading.objectName.motorcycleModel) {
             object.position.add(new Vector3(-this.motorcycleVelocity, 0, 0));
           }
 
@@ -325,6 +350,10 @@ export class MotorcycleIIIDM extends IIIDM {
         name: runMotorcycle.name,
         action: runMotorcycle.bind(this),
       });
+
+      if (this.frameManager.isActive) return;
+
+      this.frameManager.activate();
     });
   }
 
@@ -434,6 +463,9 @@ export class MotorcycleIIIDM extends IIIDM {
         name: declineEngineLight.name,
         action: declineEngineLight.bind(this),
       });
+
+      if (this.frameManager.isActive) return;
+
       this.frameManager.activate();
     });
   }
@@ -649,19 +681,21 @@ export class MotorcycleIIIDM extends IIIDM {
     );
 
     // NOTE: Execute active section function.
-    if (
-      leftCameraXPosition >= aForthTotalCameraXPosition * 3 &&
-      activeControlledSection !== 'loading'
-    ) {
-      controlledSectionInfo[activeControlledSection].activate?.();
-    } else if (
-      leftCameraXPosition < aForthTotalCameraXPosition * 3 &&
-      leftCameraXPosition >= aForthTotalCameraXPosition &&
-      activeControlledSection !== 'loading'
-    ) {
-      controlledSectionInfo[activeControlledSection].deactivate?.();
+    if (activeControlledSection === 'loading') {
+      if (leftCameraXPosition <= aForthTotalCameraXPosition) {
+        controlledSectionInfo[nextControlledSection].activate?.();
+      }
     } else {
-      controlledSectionInfo[nextControlledSection].activate?.();
+      if (leftCameraXPosition >= aForthTotalCameraXPosition * 3) {
+        controlledSectionInfo[activeControlledSection].activate?.();
+      } else if (
+        leftCameraXPosition < aForthTotalCameraXPosition * 3 &&
+        leftCameraXPosition >= aForthTotalCameraXPosition
+      ) {
+        controlledSectionInfo[activeControlledSection].deactivate?.();
+      } else {
+        controlledSectionInfo[nextControlledSection].activate?.();
+      }
     }
 
     if (
@@ -840,7 +874,120 @@ export class MotorcycleIIIDM extends IIIDM {
       name: moveCameraToTargetSection.name,
       action: moveCameraToTargetSection.bind(this),
     });
+
+    if (this.frameManager.isActive) return;
+
     this.frameManager.activate();
+  }
+
+  private visibleMotorcycle() {
+    let makeCount = 25;
+
+    const motorcycleModel = this.activeScene.getObjectByName(
+      SECTION_DATA.loading.objectName.motorcycleModel
+    );
+
+    if (!motorcycleModel) return;
+
+    const makeMotorcycleModelVisible = () => {
+      if (makeCount <= 0) {
+        this.frameManager.removeFrameUpdateAction(makeMotorcycleModelVisible.name);
+      }
+
+      motorcycleModel.traverse(object => {
+        if (
+          object instanceof Mesh &&
+          object.isMesh &&
+          (object.material instanceof MeshStandardMaterial ||
+            object.material instanceof MeshPhysicalMaterial)
+        ) {
+          if (object.material.opacity < 1) {
+            object.material.opacity += 0.05;
+          } else {
+            object.material.opacity = 1;
+
+            if (object.material.transparent) object.material.transparent = false;
+          }
+        }
+      });
+
+      makeCount -= 1;
+    };
+
+    this.frameManager.addFrameUpdateAction({
+      name: makeMotorcycleModelVisible.name,
+      action: makeMotorcycleModelVisible.bind(this),
+    });
+
+    if (this.frameManager.isActive) return;
+
+    this.frameManager.activate();
+  }
+
+  private invisibleMotorcycle() {
+    let makeCount = 25;
+
+    const motorcycleModel = this.activeScene.getObjectByName(
+      SECTION_DATA.loading.objectName.motorcycleModel
+    );
+
+    if (!motorcycleModel) return;
+
+    const makeMotorcycleModelInvisible = () => {
+      if (makeCount <= 0) {
+        this.frameManager.removeFrameUpdateAction(makeMotorcycleModelInvisible.name);
+      }
+
+      motorcycleModel.traverse(object => {
+        if (
+          object instanceof Mesh &&
+          object.isMesh &&
+          (object.material instanceof MeshStandardMaterial ||
+            object.material instanceof MeshPhysicalMaterial)
+        ) {
+          if (!object.material.transparent) object.material.transparent = true;
+
+          if (object.material.opacity > 0) {
+            object.material.opacity -= 0.05;
+          } else {
+            object.material.opacity = 0;
+          }
+        }
+      });
+
+      makeCount -= 1;
+    };
+
+    this.frameManager.addFrameUpdateAction({
+      name: makeMotorcycleModelInvisible.name,
+      action: makeMotorcycleModelInvisible.bind(this),
+    });
+
+    if (this.frameManager.isActive) return;
+
+    this.frameManager.activate();
+  }
+
+  private showBattery() {
+    if (!this.batteryModel) return;
+
+    this.addObjectsToScene(true, this.batteryModel);
+  }
+
+  private unshowBattery() {
+    console.info('Unshow Battery');
+    console.info(this.batteryModel);
+    this.removeObjectsFromScene(true, SECTION_DATA.loading.objectName.batteryModelSolo);
+  }
+
+  private showMCU() {
+    if (!this.mcuModel) return;
+
+    this.addObjectsToScene(true, this.mcuModel);
+  }
+
+  private unshowMCU() {
+    this.removeObjectsFromScene(true, SECTION_DATA.loading.objectName.mcuModelSolo);
   }
 
   // NOTE: Spec Section.
@@ -862,7 +1009,7 @@ export class MotorcycleIIIDM extends IIIDM {
       const ambientLight = new AmbientLight(0xffffff, 1);
 
       this.activeScene.traverse(object => {
-        if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+        if (object.name === SECTION_DATA.loading.objectName.motorcycleModel) {
           object.add(ambientLight);
         }
       });
@@ -906,6 +1053,9 @@ export class MotorcycleIIIDM extends IIIDM {
         name: turnOnTheLight.name,
         action: turnOnTheLight.bind(this),
       });
+
+      if (this.frameManager.isActive) return;
+
       this.frameManager.activate();
     });
   }
@@ -958,6 +1108,10 @@ export class MotorcycleIIIDM extends IIIDM {
         name: addColor.name,
         action: addColor.bind(this),
       });
+
+      if (this.frameManager.isActive) return;
+
+      this.frameManager.activate();
     });
   }
 
@@ -979,6 +1133,9 @@ export class MotorcycleIIIDM extends IIIDM {
         name: moveCameraToSpecSection.name,
         action: moveCameraToSpecSection.bind(this),
       });
+
+      if (this.frameManager.isActive) return;
+
       this.frameManager.activate();
     });
   }
@@ -1010,7 +1167,7 @@ export class MotorcycleIIIDM extends IIIDM {
     if (controlledSectionInfo.battery.isActive) return;
 
     this.activeScene.traverse(object => {
-      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+      if (object.name === SECTION_DATA.loading.objectName.motorcycleModel) {
         object.children
           .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
           .map(child =>
@@ -1039,7 +1196,7 @@ export class MotorcycleIIIDM extends IIIDM {
     if (!controlledSectionInfo.battery.isActive) return;
 
     this.activeScene.traverse(object => {
-      if (object.name === SECTION_DATA.loading.objectName.motorcycle) {
+      if (object.name === SECTION_DATA.loading.objectName.motorcycleModel) {
         object.children
           .filter(child => child.name !== 'batteryModel' && child.name !== 'mcuModel')
           .map(child =>
@@ -1068,6 +1225,9 @@ export class MotorcycleIIIDM extends IIIDM {
 
     if (controlledSectionInfo.bms.isActive) return;
 
+    this.invisibleMotorcycle();
+    this.showBattery();
+
     this._onBMSSectionActivateAction?.();
 
     controlledSectionInfo.bms.isActive = true;
@@ -1077,6 +1237,9 @@ export class MotorcycleIIIDM extends IIIDM {
     const { controlledSectionInfo } = this.sectionController;
 
     if (!controlledSectionInfo.bms.isActive) return;
+
+    this.visibleMotorcycle();
+    this.unshowBattery();
 
     this._onBMSSectionDeactivateAction?.();
 
@@ -1089,6 +1252,9 @@ export class MotorcycleIIIDM extends IIIDM {
 
     if (controlledSectionInfo.mcu.isActive) return;
 
+    this.invisibleMotorcycle();
+    this.showMCU();
+
     this._onMCUSectionActivateAction?.();
 
     controlledSectionInfo.mcu.isActive = true;
@@ -1098,6 +1264,9 @@ export class MotorcycleIIIDM extends IIIDM {
     const { controlledSectionInfo } = this.sectionController;
 
     if (!controlledSectionInfo.mcu.isActive) return;
+
+    this.visibleMotorcycle();
+    this.unshowMCU();
 
     this._onMCUSectionDeactivateAction?.();
 
@@ -1109,6 +1278,8 @@ export class MotorcycleIIIDM extends IIIDM {
     const { controlledSectionInfo } = this.sectionController;
 
     if (controlledSectionInfo.electricMotor.isActive) return;
+
+    this.animationManager.activate();
 
     this._onElectricMotorSectionActivateAction?.();
 
@@ -1268,59 +1439,10 @@ export class MotorcycleIIIDM extends IIIDM {
       name: this.updateControl.name,
       action: this.updateControl.bind(this),
     });
+
+    if (this.frameManager.isActive) return;
+
     this.frameManager.activate();
-  }
-
-  visibleMotorcycle() {}
-
-  invisibleMotorcycle() {
-    const motorcycleModel = this.activeScene.getObjectByName(
-      SECTION_DATA.loading.objectName.motorcycle
-    );
-
-    if (motorcycleModel) {
-      motorcycleModel.traverse(object => {
-        if (
-          object instanceof Mesh &&
-          object.isMesh &&
-          (object.material instanceof MeshStandardMaterial ||
-            object.material instanceof MeshPhysicalMaterial)
-        ) {
-          if (!object.material.transparent) object.material.transparent = true;
-
-          if (object.material.opacity >= 0) {
-            object.material.opacity -= 0.01;
-          } else {
-            object.material.opacity = 0;
-          }
-        }
-      });
-    }
-  }
-
-  private focusToBattery() {
-    const batteryModel = this.activeScene.getObjectByName('batteryModel');
-
-    if (batteryModel) {
-      const oneBatteryModel = batteryModel.children[0];
-      oneBatteryModel.rotateX((Math.PI / 180) * 90);
-      oneBatteryModel.rotateZ(-Math.PI / 2);
-
-      oneBatteryModel.position.add(new Vector3(0, -0.05, 0));
-
-      this.addObjectsToScene(true, oneBatteryModel);
-    }
-  }
-
-  private showMCU() {
-    const mcuModel = this.activeScene.getObjectByName('mcuModel');
-
-    this.removeObjectsFromScene(false, SECTION_DATA.loading.objectName.motorcycle);
-
-    if (mcuModel) {
-      mcuModel.position.add(new Vector3(-0.8, -1.25, 0));
-      this.addObjectsToScene(true, mcuModel);
-    }
   }
 
   async activate() {
